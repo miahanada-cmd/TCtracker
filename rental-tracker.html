@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Rental Tracker — LRG</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:#f5f0e8;color:#3a3020;font-family:'Lato','Helvetica Neue',sans-serif;font-size:13px}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#f0ebe0}::-webkit-scrollbar-thumb{background:#d0c8b8;border-radius:2px}
+input,textarea,select{outline:none;font-family:inherit}
+input::placeholder,textarea::placeholder{color:#c0b8a8}
+#app{display:flex;flex-direction:column;height:100vh}
+#topbar{background:#faf7f2;border-bottom:1px solid #e0d8c8;padding:10px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px;flex-wrap:wrap}
+.brand{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;letter-spacing:.5px;color:#2a2010}
+.brand-sub{font-size:9px;color:#b0a890;letter-spacing:2.5px;font-weight:700;margin-left:10px}
+.top-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#save-status{font-size:10px;letter-spacing:1px;color:#90a880}
+.btn-primary{background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:6px 16px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer;letter-spacing:.5px}
+.btn-primary:hover{opacity:.82}
+.btn-ghost-sm{background:transparent;border:1px solid #d0c8b8;border-radius:20px;padding:5px 13px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer;color:#8a7a60;letter-spacing:.4px}
+.btn-ghost-sm:hover{background:#ede8de}
+#body{display:flex;flex:1;overflow:hidden}
+#sidebar{width:200px;background:#f0ebe0;border-right:1px solid #e0d8c8;overflow-y:auto;flex-shrink:0}
+#main-scroll{flex:1;overflow-y:auto}
+#main{padding:20px 26px 60px}
+.tx-tab{padding:12px 14px;border-bottom:1px solid #e0d8c8;cursor:pointer;transition:background .14s;border-left:3px solid transparent}
+.tx-tab:hover{background:#ede8de}
+.tx-tab.active{background:#faf7f2;border-left-color:#8a7a50}
+.t-addr{font-size:11px;color:#7a7060;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.t-client{font-size:10px;color:#a09880;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb-out{background:#e0d8c8;border-radius:6px;height:4px;margin-top:6px}
+.pb-in{height:4px;border-radius:6px;background:linear-gradient(90deg,#8a7a50,#b0a060);transition:width .4s}
+.t-pct{font-size:9px;color:#b0a890;margin-top:2px}
+.fi{background:#faf7f2;border:1px solid #d8d0c0;border-radius:7px;color:#3a3020;padding:7px 10px;font-family:'Lato',sans-serif;font-size:12px;transition:border-color .18s;width:100%}
+.fi:focus{border-color:#a09060}
+.fi-sm{background:#f5f0e8;border:1px solid #d8d0c0;border-radius:6px;color:#3a3020;padding:5px 8px;font-family:'Lato',sans-serif;font-size:11px}
+.flabel{font-size:9px;color:#8a7a60;font-weight:700;letter-spacing:1.5px;display:block;margin-bottom:4px}
+.sec{background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;margin-bottom:16px;overflow:hidden}
+.sec-hdr{padding:11px 18px;border-bottom:1px solid #ece4d8;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:600;font-style:italic;color:#4a4030}
+.sec-body{padding:14px 18px}
+.cl-item{display:flex;align-items:flex-start;gap:10px;padding:8px 16px;border-bottom:1px solid #f0ebe0;transition:background .12s}
+.cl-item:last-child{border-bottom:none}
+.cl-item:hover{background:#f8f5f0}
+.cl-item.done-item{background:#f5faf5}
+.cl-item.na-item{opacity:.55}
+.cl-cb{width:15px;height:15px;accent-color:#8a7a50;cursor:pointer;flex-shrink:0;margin-top:1px}
+.cl-label{font-size:11px;color:#3a3020;cursor:pointer;flex:1;line-height:1.4}
+.cl-label.checked{color:#8a9a80;text-decoration:line-through}
+.cl-label.na{color:#b0a890;text-decoration:line-through}
+.na-toggle{font-size:9px;color:#c0b8a8;font-weight:700;cursor:pointer;padding:2px 7px;border:1px solid #e0d8c8;border-radius:10px;white-space:nowrap;background:transparent;flex-shrink:0}
+.na-toggle.active{color:#b08040;border-color:#d4c080;background:#fff8e8}
+.cl-note{font-size:10px;background:transparent;border:none;border-bottom:1px solid #ece4d8;width:100%;font-family:'Lato',sans-serif;color:#7a6a50;padding:2px 0;margin-top:3px}
+.cl-note:focus{outline:none;border-bottom-color:#a09060}
+.add-item-bar{display:flex;gap:8px;align-items:center;padding:10px 16px;border-top:1px solid #ece4d8;background:#f8f4ee;flex-wrap:wrap}
+.prog-wrap{background:#faf7f2;border:1px solid #e0d8c8;border-radius:10px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.prog-bar-out{flex:1;min-width:80px;background:#e8e0d0;border-radius:6px;height:6px}
+.prog-bar-in{height:6px;border-radius:6px;background:linear-gradient(90deg,#8a7a50,#b0a060);transition:width .5s}
+.hdr-card{background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;padding:16px 18px;margin-bottom:16px}
+/* Applicant card */
+.appl-card{background:#faf7f2;border:1px solid #e0d8c8;border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.appl-card.approved{border-color:#90c898;background:#f5faf5}
+.appl-card.denied{border-color:#d49090;background:#fdf5f5;opacity:.8}
+.status-pill{display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer}
+/* Dashboard */
+.dash-card{background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;padding:16px 20px;margin-bottom:14px;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.dash-card:hover{box-shadow:0 2px 12px rgba(58,48,32,.08);border-color:#c8b870}
+.dash-card.done-card{background:#f5faf5;border-color:#b8d8b8;opacity:.85}
+.dash-prog{background:#e8e0d0;border-radius:6px;height:5px;margin-top:8px}
+.dash-prog-fill{height:5px;border-radius:6px;background:linear-gradient(90deg,#8a7a50,#b0a060);transition:width .4s}
+.overlay{position:fixed;inset:0;background:rgba(50,40,20,.42);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(5px)}
+.modal{background:#faf7f2;border:1px solid #e0d8c8;border-radius:16px;padding:26px;width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.13)}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#2a2010;margin-bottom:2px}
+.modal-sub{font-size:9px;color:#b0a890;letter-spacing:2px;font-weight:700;margin-bottom:16px}
+.field-wrap{margin-bottom:11px}
+.field-wrap label{display:block;font-size:9px;color:#8a7a60;letter-spacing:1.5px;font-weight:700;margin-bottom:4px}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+.btn-create{flex:1;background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:10px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer}
+.btn-cancel{flex:1;background:transparent;color:#8a7a60;border:1px solid #d0c8b8;border-radius:20px;padding:10px;font-size:11px;font-family:'Lato',sans-serif;cursor:pointer}
+.empty-dash{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;color:#c0b8a8;gap:12px}
+/* Tabs inside file */
+.tab-bar{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tab-btn{cursor:pointer;padding:6px 15px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;letter-spacing:.6px;border-radius:20px;transition:all .14s}
+.tab-btn.active{background:#3a3020;color:#f5f0e8;border:1px solid #3a3020}
+.tab-btn:not(.active){background:transparent;color:#8a7a60;border:1px solid #d0c8b8}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div><span class="brand">Rental Tracker</span><span class="brand-sub">LANDON REALTY GROUP</span></div>
+      <button id="dash-btn" class="btn-ghost-sm" onclick="goToDash()">⌂ Dashboard</button>
+    </div>
+    <div class="top-right">
+      <span id="save-status">● saved</span>
+      <span id="file-count"></span>
+      <button class="btn-ghost-sm" onclick="exportData()" title="Download backup">⬇ Export</button>
+      <label class="btn-ghost-sm" title="Restore from backup">⬆ Import<input type="file" accept=".json" onchange="importData(this)" style="display:none"/></label>
+      <button class="btn-primary" onclick="openModal()">+ New Rental</button>
+    </div>
+  </div>
+  <div id="body">
+    <div id="sidebar"></div>
+    <div id="main-scroll"><div id="main"></div></div>
+  </div>
+</div>
+
+<div id="modal" class="overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2>New Rental File</h2>
+    <p class="modal-sub">FILL IN WHAT YOU KNOW — EDIT ANYTIME</p>
+    <div class="field-wrap"><label>PROPERTY ADDRESS</label><input class="fi" id="m-address" placeholder="123 Main St, Unit 4, Burbank CA…"/></div>
+    <div class="field-wrap"><label>OWNER / LANDLORD</label><input class="fi" id="m-owner" placeholder="Owner name…"/></div>
+    <div class="field-wrap"><label>OUR AGENT</label>
+      <select class="fi" id="m-agent">
+        <option value="">Select agent…</option>
+        <optgroup label="Team Agents">
+          <option>Nancy Gonzalez</option><option>Ethan Plemmons</option><option>Heather Savoy</option>
+          <option>Jason Chinchilla</option><option>Ki Contreras</option><option>Maya Worthy</option>
+          <option>Luke Simon</option><option>Jennifer Landon</option>
+        </optgroup>
+        <optgroup label="Independent"><option>Casi Kneebone</option></optgroup>
+        <optgroup label="Referral"><option>Artur Aleksanyan</option><option>Annie Mochrie</option></optgroup>
+      </select>
+    </div>
+    <div class="field-wrap"><label>MONTHLY RENT</label><input class="fi" id="m-rent" placeholder="$0,000/mo"/></div>
+    <div class="field-wrap"><label>MOVE-IN DATE</label><input class="fi" type="date" id="m-movein"/></div>
+    <div class="modal-btns">
+      <button class="btn-create" onclick="createFile()">Create File</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SK="rental_tracker_v1";
+let FILES=[],AID=null,VIEW="dash",FTAB="checklist",DASH_NOTES="",STIMER=null;
+
+/* ── SECTIONS (LRG Lease Forms & Checklist) ── */
+const SECTIONS=[
+  {id:"listing_docs", title:"Listing Documents", color:"#d4a96a", items:[
+    {id:"ll_lease_agmt", label:"LL"},
+    {id:"ad_agency",     label:"AD (Owner)"},
+    {id:"rla_keybox",    label:"RLA-Keybox"},
+    {id:"adm_addendum",  label:"ADM"},
+    {id:"pre_move_prac", label:"Pre-Move-In Practice"},
+  ]},
+  {id:"lease", title:"Lease", color:"#b0a0d8", items:[
+    {id:"rlmm",        label:"RLMM",    signing:{hp:false,t:false,fe:false}},
+    {id:"rlmm_adm",    label:"RLMM ADM",signing:{hp:false,t:false,fe:false}},
+    {id:"lmd",         label:"LMD",     signing:{hp:false,t:false,fe:false}},
+    {id:"copy_checks", label:"Copy of Checks"},
+  ]},
+  {id:"applicant1", title:"Applicant #1", color:"#9ab8d0", items:[
+    {id:"lra_app1",    label:"LRA — Applicant #1"},
+    {id:"credit_app1", label:"Credit Report — Applicant 1"},
+    {id:"cadl_app1",   label:"CA DL — Applicant 1"},
+  ]},
+  {id:"applicant2", title:"Applicant #2", color:"#6a98c0", items:[
+    {id:"lra_app2",    label:"LRA — Applicant #2"},
+    {id:"credit_app2", label:"Credit Report — Applicant 2"},
+    {id:"cadl_app2",   label:"CA DL — Applicant 2"},
+  ]},
+  {id:"guarantor", title:"Guarantor (if applicable)", color:"#c8b090", items:[
+    {id:"guar_app",    label:"Guarantor Application"},
+    {id:"guar_credit", label:"Guarantor Credit Report"},
+    {id:"guar_id",     label:"Guarantor ID"},
+  ]},
+  {id:"tenant_side", title:"Tenant-Side Docs", color:"#a8c4a0", items:[
+    {id:"ad_tenant",   label:"AD (Tenant)"},
+    {id:"pool_waiver", label:"Pool Waiver"},
+  ]},
+  {id:"disclosures", title:"Disclosures", color:"#e8a890", items:[
+    {id:"atca",     label:"ATCA",  signing:true},
+    {id:"bed_bug",  label:"BBD",   signing:true},
+    {id:"fhda",     label:"FHDA",  signing:true},
+    {id:"klh_keybox",label:"KLH",  signing:true},
+    {id:"lpd",      label:"LPD",   signing:true},
+    {id:"mi",       label:"MI",    signing:true},
+    {id:"lrm",      label:"LRM",   signing:true},
+    {id:"rcjc",     label:"RCJC",  signing:true},
+    {id:"p_s_disc", label:"P&S",   signing:true},
+    {id:"rpod",     label:"RPOD",  signing:true},
+    {id:"tfhd",     label:"TFHD",  signing:true},
+    {id:"trbc",     label:"TRBC",  signing:true},
+    {id:"trpr",     label:"TRPR",  signing:true},
+    {id:"wcmd",     label:"WCMD",  signing:true},
+    {id:"wfa",      label:"WFA",   signing:true},
+    {id:"whsd",     label:"WHSD",  signing:true},
+  ]},
+];
+
+/* ── FACTORY ── */
+function defChecks(){
+  const c={};
+  SECTIONS.forEach(s=>s.items.forEach(i=>{
+    c[i.id]={done:false,na:false,date:"",note:"",
+      ...(i.signing!==undefined?{hpSigned:false,tSigned:false,fe:false}:{})
+    };
+  }));
+  return c;
+}function defApplicant(n){
+  return{id:"appl_"+Date.now()+"_"+n,num:n,name:"",email:"",phone:"",
+    employment:"",income:"",moveInDate:"",
+    creditPulled:false,creditScore:"",creditNotes:"",
+    status:"pending", // pending | approved | denied
+    notes:""};
+}
+function nFile(){
+  return{
+    id:"rt_"+Date.now(),
+    address:"",owner:"",ownerEntity:"individual",ownerLegalName:"",
+    agent:"",agentDRE:"",agentEmail:"",agentPhone:"",
+    coAgent:"",coAgentDRE:"",coAgentBrokerage:"",coAgentBrokerageDRE:"",coAgentEmail:"",
+    coAgentAssistant:"",coAgentAssistantEmail:"",
+    rent:"",deposit:"",moveInDate:"",leaseStart:"",leaseEnd:"",
+    tcFee:"",driveFolder:"",bmFileOpen:false,
+    checks:defChecks(),customItems:{},
+    applicants:[defApplicant(1)],
+    rentalDone:false,dashNote:"",notes:"",
+    createdAt:new Date().toISOString()
+  };
+}
+
+/* ── AGENTS ── */
+const AGENTS={
+  "Nancy Gonzalez":  {dre:"02122571",email:"Nancy@lrgla.com",   phone:"(818) 601-4190"},
+  "Ethan Plemmons":  {dre:"02109156",email:"Ethan@lrgla.com",   phone:"(870) 917-7473"},
+  "Heather Savoy":   {dre:"02220601",email:"Heather@lrgla.com", phone:"(747) 273-4529"},
+  "Jason Chinchilla":{dre:"02204413",email:"Jason@lrgla.com",   phone:"(818) 277-0224"},
+  "Ki Contreras":    {dre:"02245823",email:"Ki@lrgla.com",       phone:"(305) 546-2440"},
+  "Maya Worthy":     {dre:"02242272",email:"Maya@lrgla.com",     phone:"(818) 288-4393"},
+  "Luke Simon":      {dre:"02362589",email:"Luke@lrgla.com",     phone:"(818) 726-7116"},
+  "Jennifer Landon": {dre:"01281552",email:"Jennifer@lrgla.com", phone:"(818) 613-1767"},
+  "Casi Kneebone":   {dre:"01955896",email:"Kneebonerealty@gmail.com",phone:"(310) 871-7297"},
+  "Artur Aleksanyan":{dre:"02126509",email:"Artur@lrgla.com",   phone:"(818) 667-1701"},
+  "Annie Mochrie":   {dre:"02193921",email:"Annie@lrgla.com",   phone:"(818) 644-9789"},
+};
+
+/* ── STORAGE ── */
+function save(){
+  clearTimeout(STIMER);
+  const el=document.getElementById("save-status");
+  el.textContent="saving…";el.style.color="#a09060";
+  STIMER=setTimeout(()=>{
+    try{localStorage.setItem(SK,JSON.stringify({files:FILES,activeId:AID,dashNotes:DASH_NOTES}));el.textContent="● saved";el.style.color="#90a880";}
+    catch(e){el.textContent="● error";}
+  },400);
+}
+function load(){
+  try{
+    const r=localStorage.getItem(SK);
+    if(r){
+      const d=JSON.parse(r);
+      FILES=(d.files||[]).map(f=>({...nFile(),...f,checks:{...defChecks(),...(f.checks||{})},customItems:f.customItems||{},applicants:(f.applicants||[defApplicant(1)])}));
+      AID=d.activeId||null;DASH_NOTES=d.dashNotes||"";
+    }
+  }catch(e){}
+  if(!FILES.length){const f=nFile();FILES.push(f);AID=f.id;}
+  if(!AID||!FILES.find(f=>f.id===AID))AID=FILES[0]?.id||null;
+}
+
+/* ── PROGRESS ── */
+function progFile(f){
+  let done=0,total=0;
+  SECTIONS.forEach(s=>{
+    const items=[...s.items,...((f.customItems||{})[s.id]||[])];
+    items.forEach(i=>{const c=(f.checks||{})[i.id]||{};if(!c.na){total++;if(c.done)done++;}});
+  });
+  return total?Math.round(done/total*100):0;
+}
+
+/* ── UTILS ── */
+function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+function fmtShort(d){if(!d)return"";return new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"});}
+function daysUntil(d){if(!d)return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((new Date(d+"T00:00:00")-t)/86400000);}
+
+/* ── RENDER ── */
+function render(){
+  document.getElementById("file-count").textContent=FILES.length+" rental"+(FILES.length!==1?"s":"");
+  const db=document.getElementById("dash-btn");
+  if(db){db.style.background=VIEW==="dash"?"#3a3020":"transparent";db.style.color=VIEW==="dash"?"#f5f0e8":"#8a7a60";db.style.borderColor=VIEW==="dash"?"#3a3020":"#d0c8b8";}
+  rSidebar();
+  if(VIEW==="dash")rDashboard();
+  else rMain();
+}
+
+function rSidebar(){
+  document.getElementById("sidebar").innerHTML=FILES.map(f=>{
+    const p=progFile(f),ac=f.id===AID;
+    const approved=(f.applicants||[]).filter(a=>a.status==="approved").length;
+    return`<div class="tx-tab${ac?" active":""}" onclick="setActive('${f.id}')">
+      ${f.rentalDone?'<span style="font-size:8px;background:#e8f4e8;color:#2a6a3a;border-radius:3px;padding:1px 5px;font-weight:700;margin-bottom:3px;display:inline-block">✓ RENTED</span>':''}
+      <div class="t-addr">${esc(f.address||"New Rental")}</div>
+      <div class="t-client">${f.agent?esc(f.agent):"—"}${f.rent?" · "+esc(f.rent):""}</div>
+      ${approved>0?`<div style="font-size:9px;color:#2a6a3a;font-weight:700;margin-top:2px">✓ ${approved} approved</div>`:""}
+      <div class="pb-out"><div class="pb-in" style="width:${p}%"></div></div>
+      <div class="t-pct">${p}% complete</div>
+    </div>`;
+  }).join("");
+}
+
+function rDashboard(){
+  const main=document.getElementById("main");
+  const sorted=[...FILES].sort((a,b)=>{
+    if(a.rentalDone&&!b.rentalDone)return 1;
+    if(!a.rentalDone&&b.rentalDone)return-1;
+    const ad=a.moveInDate?new Date(a.moveInDate+"T00:00:00"):new Date("9999-01-01");
+    const bd=b.moveInDate?new Date(b.moveInDate+"T00:00:00"):new Date("9999-01-01");
+    return ad-bd;
+  });
+  const active=FILES.filter(f=>!f.rentalDone);
+
+  const cards=sorted.map(f=>{
+    const p=progFile(f);
+    const approved=(f.applicants||[]).filter(a=>a.status==="approved");
+    const pending=(f.applicants||[]).filter(a=>a.status==="pending");
+    const moveDays=f.moveInDate?daysUntil(f.moveInDate):null;
+    const cdColor=moveDays===null?"#a09880":moveDays<0?"#8a3a3a":moveDays<=3?"#7a5a00":"#3a6644";
+    const cdText=moveDays===null?"":moveDays<0?Math.abs(moveDays)+"d past move-in":moveDays===0?"Move-in TODAY":moveDays+"d to move-in";
+    return`<div class="dash-card${f.rentalDone?" done-card":""}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;cursor:pointer" data-open-file="${f.id}">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:3px">
+            ${f.agent?`<span style="font-size:9px;color:#a09880;font-weight:700">${esc(f.agent)}</span>`:""}
+            ${f.rentalDone?`<span style="font-size:9px;background:#e8f4e8;color:#2a6a3a;border-radius:3px;padding:1px 7px;font-weight:700">✓ RENTED</span>`:""}
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:${f.rentalDone?"#4a7a5a":"#2a2010"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(f.address||"Untitled Rental")}</div>
+          <div style="font-size:11px;color:#8a7a60;margin-top:2px">${esc(f.owner||"—")}${f.rent?` · <span style="font-weight:700;color:#3a3020">${esc(f.rent)}</span>/mo`:""}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">
+            ${approved.length>0?`<span style="font-size:9px;background:#e8f4e8;color:#2a6a3a;border-radius:3px;padding:1px 7px;font-weight:700">✓ ${approved.length} Approved</span>`:""}
+            ${pending.length>0?`<span style="font-size:9px;background:#fff8e8;color:#7a5a00;border-radius:3px;padding:1px 7px;font-weight:700">${pending.length} Screening</span>`:""}
+            ${f.bmFileOpen?`<span style="font-size:9px;background:#e8f0f8;color:#2a4a7a;border-radius:3px;padding:1px 7px;font-weight:700">✓ BM Open</span>`:`<span style="font-size:9px;background:#f5f0e8;color:#a09880;border-radius:3px;padding:1px 7px;font-weight:700">BM not open</span>`}
+            ${f.driveFolder?`<span style="font-size:9px;background:#e8f0f8;color:#2a4a7a;border-radius:3px;padding:1px 7px;font-weight:700">✓ Drive</span>`:""}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          ${cdText?`<div style="font-size:11px;font-weight:700;color:${cdColor}">${cdText}</div>`:""}
+          ${f.moveInDate?`<div style="font-size:9px;color:#b0a890;margin-top:1px">Move-in ${fmtShort(f.moveInDate)}</div>`:""}
+          <div style="font-size:10px;font-weight:700;color:#8a7a50;margin-top:5px">${p}%</div>
+        </div>
+      </div>
+      <div class="dash-prog"><div class="dash-prog-fill" style="width:${p}%"></div></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:${f.rentalDone?"#e8f4e8":"#f5f0e8"};border:1px solid ${f.rentalDone?"#90c898":"#d0c8b8"};border-radius:20px;padding:4px 12px;flex-shrink:0">
+          <input type="checkbox" ${f.rentalDone?"checked":""} data-rented-id="${f.id}" style="accent-color:#3a7a4a;width:13px;height:13px;cursor:pointer"/>
+          <span style="font-size:10px;font-weight:700;color:${f.rentalDone?"#2a6a3a":"#8a7a60"};white-space:nowrap">${f.rentalDone?"✓ Rented":"Mark Rented"}</span>
+        </label>
+        <button data-open-file="${f.id}" style="margin-left:auto;background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:4px 14px;font-size:10px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer">Open →</button>
+      </div>
+      <div style="margin-top:10px;border-top:1px solid #ece4d8;padding-top:10px">
+        <textarea data-dash-note="${f.id}" placeholder="Notes…" onchange="setDashNote('${f.id}',this.value)" onblur="setDashNote('${f.id}',this.value)"
+          style="width:100%;background:${f.dashNote?"#fffdf5":"#f8f5f0"};border:1px solid ${f.dashNote?"#d4c080":"#ece4d8"};border-radius:7px;padding:8px 11px;font-family:'Lato',sans-serif;font-size:11px;color:#3a3020;resize:none;line-height:1.5;min-height:34px"
+          rows="2">${esc(f.dashNote||"")}</textarea>
+      </div>
+    </div>`;
+  }).join("");
+
+  main.innerHTML=`
+    <div style="padding:0 0 4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#2a2010">Rental Dashboard</div>
+          <div style="font-size:10px;color:#b0a890;letter-spacing:1.5px;font-weight:700;margin-top:1px">${new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}).toUpperCase()}</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <div style="background:#faf7f2;border:1px solid #e0d8c8;border-radius:10px;padding:10px 16px;text-align:center;min-width:70px">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#2a2010">${active.length}</div>
+            <div style="font-size:9px;color:#b0a890;font-weight:700;letter-spacing:1px">ACTIVE</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;overflow:hidden;margin-bottom:20px">
+        <div style="padding:10px 16px;border-bottom:1px solid #ece4d8"><span style="font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:600;font-style:italic;color:#4a4030">Quick Notes</span></div>
+        <textarea id="dash-notes-ta" placeholder="Reminders, follow-ups…" onchange="DASH_NOTES=this.value;save();" onblur="DASH_NOTES=this.value;save();"
+          style="width:100%;min-height:80px;background:transparent;border:none;padding:12px 16px;font-family:'Lato',sans-serif;font-size:12px;color:#3a3020;resize:vertical;line-height:1.6"
+        >${esc(DASH_NOTES)}</textarea>
+      </div>
+      <div style="font-size:9px;color:#b0a890;font-weight:700;letter-spacing:2px;margin-bottom:10px">RENTALS — SORTED BY MOVE-IN DATE</div>
+      ${!FILES.length?`<div class="empty-dash"><span style="font-size:28px">🏠</span><span style="font-style:italic;font-size:13px">No rental files yet</span><button class="btn-primary" onclick="openModal()">+ Create First Rental</button></div>`:""}
+      ${cards}
+    </div>`;
+}
+
+function rMain(){
+  const main=document.getElementById("main");
+  if(VIEW==="dash"){rDashboard();return;}
+  const f=FILES.find(x=>x.id===AID);
+  if(!f){rDashboard();return;}
+  const p=progFile(f);
+  const tabs=[
+    {id:"checklist",label:"Checklist"},
+    {id:"applicants",label:"Applicants / Screening"},
+    {id:"info",label:"File Info"},
+  ];
+  const tabBar=`<div class="tab-bar">${tabs.map(t=>`<button class="tab-btn${FTAB===t.id?" active":""}" onclick="swFTab('${t.id}')">${t.label}</button>`).join("")}</div>`;
+
+  let content="";
+  if(FTAB==="checklist") content=rChecklist(f);
+  else if(FTAB==="applicants") content=rApplicants(f);
+  else content=rInfo(f);
+
+  main.innerHTML=`
+    <div class="hdr-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:#2a2010;margin-bottom:4px">${esc(f.address||"Untitled Rental")}</div>
+          <div style="font-size:11px;color:#8a7a60">${esc(f.owner||"—")}${f.agent?" · "+esc(f.agent):""}${f.rent?" · <strong>"+esc(f.rent)+"</strong>/mo":""}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+            ${f.bmFileOpen?`<span style="font-size:9px;background:#e8f4e8;color:#2a6a3a;border-radius:3px;padding:1px 7px;font-weight:700">✓ BM Open</span>`:`<span style="font-size:9px;background:#f5f0e8;color:#a09880;border-radius:3px;padding:1px 7px;font-weight:700">BM not open</span>`}
+            ${f.driveFolder?`<a href="${esc(f.driveFolder)}" target="_blank" style="font-size:9px;background:#e8f0f8;color:#2a4a7a;border-radius:3px;padding:1px 7px;font-weight:700;text-decoration:none">✓ Drive ↗</a>`:""}
+            ${f.tcFee?`<span style="font-size:9px;background:#f5f0e8;color:#8a7a50;border-radius:3px;padding:1px 7px;font-weight:700">TC Fee: ${esc(f.tcFee)}</span>`:""}
+          </div>
+        </div>
+        <button class="btn-ghost-sm" style="color:#a07070;border-color:#d0b8b8" onclick="rmFile('${f.id}')">✕ Close</button>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-bar-out"><div class="prog-bar-in" style="width:${p}%"></div></div>
+      <span style="font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:#2a2010">${p}%</span>
+      <span style="font-size:10px;color:#8a7a60">checklist complete</span>
+      <label style="display:flex;align-items:center;gap:7px;cursor:pointer;margin-left:auto;background:${f.rentalDone?"#e8f4e8":"#f5f0e8"};border:1px solid ${f.rentalDone?"#90c898":"#d0c8b8"};border-radius:20px;padding:5px 14px">
+        <input type="checkbox" ${f.rentalDone?"checked":""} onchange="setRentalDone('${f.id}',this.checked)" style="accent-color:#3a7a4a;width:13px;height:13px;cursor:pointer"/>
+        <span style="font-size:10px;font-weight:700;color:${f.rentalDone?"#2a6a3a":"#8a7a60"}">${f.rentalDone?"✓ Rented":"Mark Rented"}</span>
+      </label>
+    </div>
+
+    ${(()=>{
+      const urgent=[];
+      // Pending checklist items in key sections
+      ['listing_docs','lease','applicant1','tenant_side'].forEach(sid=>{
+        const s=SECTIONS.find(x=>x.id===sid);if(!s)return;
+        const items=[...s.items,...((f.customItems||{})[sid]||[])];
+        items.forEach(i=>{
+          const c=(f.checks||{})[i.id]||{};
+          if(!c.done&&!c.na)urgent.push({label:i.label,section:s.title,bg:"#fff8e8",border:"#d4c080",dot:"#c4a840",text:"#7a5a00"});
+        });
+      });
+      // Applicants pending
+      const pendingApplicants=(f.applicants||[]).filter(a=>a.status==="pending"&&a.name);
+      pendingApplicants.forEach(a=>urgent.push({label:`${a.name} — Screening Pending`,section:"Applicants",bg:"#e8f0f8",border:"#7090c8",dot:"#5070a8",text:"#2a3a68"}));
+      // Move-in approaching
+      if(f.moveInDate){
+        const d=daysUntil(f.moveInDate);
+        if(d!==null&&d<=7&&d>=0)urgent.push({label:"Move-In Approaching",section:`${fmtShort(f.moveInDate)} — ${d===0?"TODAY":d===1?"tomorrow":d+"d away"}`,bg:"#f0e8f8",border:"#b090c8",dot:"#8a60a8",text:"#4a2a68"});
+      }
+      if(!f.bmFileOpen)urgent.push({label:"BM File Not Opened",section:"File Setup",bg:"#fff8e8",border:"#d4c080",dot:"#c4a840",text:"#7a5a00"});
+      if(!f.driveFolder)urgent.push({label:"No Google Drive Folder",section:"File Setup",bg:"#f5f0e8",border:"#d0c8b8",dot:"#b0a890",text:"#8a7a60"});
+
+      if(!urgent.length)return`<div style="background:#f5faf5;border:1px solid #b8d8b8;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:16px">✓</span>
+        <span style="font-size:12px;color:#3a6644;font-weight:700">No urgent tasks — this rental is on track!</span>
+      </div>`;
+
+      const chips=urgent.slice(0,8).map(u=>`<div style="background:${u.bg};border:1px solid ${u.border};border-radius:8px;padding:9px 13px;display:flex;align-items:flex-start;gap:9px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${u.dot};flex-shrink:0;margin-top:3px"></div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:${u.text}">${esc(u.label)}</div>
+          <div style="font-size:10px;color:${u.text};opacity:.8;margin-top:1px">${esc(u.section)}</div>
+        </div>
+      </div>`).join("");
+      return`<div style="background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;padding:14px 16px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:600;font-style:italic;color:#4a4030">Urgent Tasks</span>
+          <span style="font-size:9px;color:#b0a890;font-weight:700;letter-spacing:1px">${urgent.length} item${urgent.length!==1?"s":""} need attention</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">${chips}</div>
+      </div>`;
+    })()}
+
+    <div class="tab-bar" style="align-items:center">
+      ${tabs.map(t=>`<button class="tab-btn${FTAB===t.id?" active":""}" onclick="swFTab('${t.id}')">${t.label}</button>`).join("")}
+      <button onclick="sendAgentUpdate('${f.id}')" style="margin-left:auto;background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:6px 16px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer;letter-spacing:.5px;flex-shrink:0">✉ Agent Update</button>
+    </div>
+    ${content}`;
+}
+
+function rChecklist(f){
+  return SECTIONS.map(s=>{
+    const items=[...s.items,...((f.customItems||{})[s.id]||[]).map(i=>({...i,custom:true}))];
+    const secDone=items.filter(i=>{const c=(f.checks||{})[i.id]||{};return c.done;}).length;
+    const secNa=items.filter(i=>{const c=(f.checks||{})[i.id]||{};return c.na;}).length;
+    const secTotal=items.length;
+    const pct=secTotal>0?Math.round(secDone/Math.max(secTotal-secNa,1)*100):0;
+    const rows=items.map(i=>{
+      const c=(f.checks||{})[i.id]||{};
+      const hasSigning=i.signing!==undefined;
+      // Signing pills — only for items with signing property
+      const signingHtml=hasSigning?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
+        ${[
+          {key:"hpSigned",label:"Housing Provider Signed",color:"#9ab8d0"},
+          {key:"tSigned", label:"Tenant Signed",          color:"#a8c4a0"},
+          {key:"fe",      label:"Fully Executed",          color:"#8a7a50"},
+        ].map(sp=>{
+          const active=!!c[sp.key];
+          return`<button onclick="setSigningStatus('${f.id}','${i.id}','${sp.key}',${!active})" style="cursor:pointer;padding:3px 10px;font-size:9px;font-family:'Lato',sans-serif;font-weight:700;border-radius:20px;border:1px solid ${active?sp.color:"#d8d0c0"};background:${active?sp.color+"22":"transparent"};color:${active?sp.color.replace("#9ab","#2a5").replace("#a8c","#2a5").replace("#8a7","#3a3"):"#b0a890"}">${active?"✓ ":""} ${sp.label}</button>`;
+        }).join("")}
+      </div>`:"";
+      return`<div class="cl-item${c.done?" done-item":""}${c.na?" na-item":""}">
+        <input type="checkbox" class="cl-cb" ${c.done?"checked":""} ${c.na?"disabled":""} onchange="setCheck('${f.id}','${i.id}',this.checked)" style="${c.na?"opacity:.4":""}"/>
+        <div style="flex:1;min-width:0">
+          <label class="cl-label${c.done?" checked":""}${c.na?" na":""}">${esc(i.label)}${i.custom?` <span style="font-size:8px;background:#ede8de;color:#8a7a60;border-radius:3px;padding:1px 4px;font-weight:700">custom</span>`:""}</label>
+          ${c.done&&c.date?`<div style="font-size:9px;color:#3a6644;font-weight:700;margin-top:1px">✓ ${fmtShort(c.date)}</div>`:""}
+          ${signingHtml}
+          <input type="text" class="cl-note" value="${esc(c.note||"")}" placeholder="Notes…" onchange="setNote('${f.id}','${i.id}',this.value)" onblur="setNote('${f.id}','${i.id}',this.value)"/>
+        </div>
+        <button class="na-toggle${c.na?" active":""}" onclick="setNA('${f.id}','${i.id}',${!c.na})">${c.na?"N/A ✓":"N/A"}</button>
+        ${i.custom?`<button style="background:none;border:none;color:#c0a898;cursor:pointer;font-size:12px;padding:0 2px" onclick="rmCustomItem('${f.id}','${s.id}','${i.id}')">×</button>`:""}
+      </div>`;
+    }).join("");
+    return`<div class="sec" style="border-left:3px solid ${s.color}">
+      <div class="sec-hdr" style="background:linear-gradient(90deg,${s.color}18,transparent)">
+        <span class="sec-title">${s.title}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:10px;color:#8a7a50;font-weight:700">${secDone}/${secTotal-secNa} done${secNa?" · "+secNa+" N/A":""}</span>
+          <div style="background:#e8e0d0;border-radius:4px;height:4px;width:60px"><div style="height:4px;border-radius:4px;background:${s.color};width:${pct}%"></div></div>
+        </div>
+      </div>
+      <div>${rows}</div>
+      <div class="add-item-bar">
+        <span style="font-size:10px;color:#8a7a60;font-weight:700;white-space:nowrap">+ ADD</span>
+        <input class="fi-sm" id="ci-${s.id}-${f.id}" placeholder="Custom item…" style="flex:1;min-width:100px" onkeydown="if(event.key==='Enter')addCustomItem('${f.id}','${s.id}')"/>
+        <button class="btn-ghost-sm" style="font-size:10px;padding:4px 12px" onclick="addCustomItem('${f.id}','${s.id}')">Add</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function rApplicants(f){
+  const applCards=(f.applicants||[]).map((a,idx)=>{
+    const statusColors={
+      pending: {bg:"#fff8e8",color:"#7a5a00",border:"#d4c080",label:"Pending / Screening"},
+      approved:{bg:"#e8f4e8",color:"#2a6a3a",border:"#90c898",label:"✓ Approved"},
+      denied:  {bg:"#f5e8e8",color:"#8a3a3a",border:"#d49090",label:"✗ Denied"},
+    };
+    const sc=statusColors[a.status]||statusColors.pending;
+    return`<div class="appl-card${a.status==="approved"?" approved":""}${a.status==="denied"?" denied":""}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <span style="font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600;color:#2a2010">Applicant ${idx+1}${a.name?" — "+esc(a.name):""}</span>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          ${["pending","approved","denied"].map(s=>`<button onclick="setApplField('${f.id}','${a.id}','status','${s}')" style="cursor:pointer;padding:3px 11px;font-size:10px;font-family:'Lato',sans-serif;font-weight:700;border-radius:20px;border:1px solid ${a.status===s?statusColors[s].border:"#d0c8b8"};background:${a.status===s?statusColors[s].bg:"transparent"};color:${a.status===s?statusColors[s].color:"#b0a890"}">${statusColors[s].label}</button>`).join("")}
+          ${idx>0?`<button onclick="rmApplicant('${f.id}','${a.id}')" style="background:none;border:none;color:#c0a898;cursor:pointer;font-size:13px;padding:0 4px">×</button>`:""}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label class="flabel">FULL NAME</label><input class="fi" value="${esc(a.name||"")}" placeholder="Full name…" onchange="setApplField('${f.id}','${a.id}','name',this.value)" onblur="setApplField('${f.id}','${a.id}','name',this.value)"/></div>
+        <div><label class="flabel">EMAIL</label><input class="fi" value="${esc(a.email||"")}" placeholder="Email…" onchange="setApplField('${f.id}','${a.id}','email',this.value)" onblur="setApplField('${f.id}','${a.id}','email',this.value)"/></div>
+        <div><label class="flabel">PHONE</label><input class="fi" value="${esc(a.phone||"")}" placeholder="Phone…" onchange="setApplField('${f.id}','${a.id}','phone',this.value)" onblur="setApplField('${f.id}','${a.id}','phone',this.value)"/></div>
+        <div><label class="flabel">EMPLOYER</label><input class="fi" value="${esc(a.employment||"")}" placeholder="Employer / self-employed…" onchange="setApplField('${f.id}','${a.id}','employment',this.value)" onblur="setApplField('${f.id}','${a.id}','employment',this.value)"/></div>
+        <div><label class="flabel">MONTHLY INCOME</label><input class="fi" value="${esc(a.income||"")}" placeholder="$0,000/mo" onchange="setApplField('${f.id}','${a.id}','income',this.value)" onblur="setApplField('${f.id}','${a.id}','income',this.value)"/></div>
+        <div><label class="flabel">DESIRED MOVE-IN</label><input class="fi" type="date" value="${esc(a.moveInDate||"")}" onchange="setApplField('${f.id}','${a.id}','moveInDate',this.value)"/></div>
+      </div>
+      <div style="background:#f5f0e8;border-radius:8px;padding:12px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" ${a.creditPulled?"checked":""} onchange="setApplField('${f.id}','${a.id}','creditPulled',this.checked)" style="accent-color:#8a7a50;width:13px;height:13px;cursor:pointer"/>
+            <span style="font-size:10px;font-weight:700;color:${a.creditPulled?"#3a6020":"#8a7a60"}">Credit Report Pulled</span>
+          </label>
+          <div style="flex:1;min-width:120px"><label class="flabel" style="margin-bottom:2px">CREDIT SCORE</label><input class="fi-sm" value="${esc(a.creditScore||"")}" placeholder="e.g. 720" style="width:100px" onchange="setApplField('${f.id}','${a.id}','creditScore',this.value)" onblur="setApplField('${f.id}','${a.id}','creditScore',this.value)"/></div>
+          <div style="flex:2;min-width:160px"><label class="flabel" style="margin-bottom:2px">CREDIT NOTES</label><input class="fi-sm" value="${esc(a.creditNotes||"")}" placeholder="Notes on credit report…" style="width:100%" onchange="setApplField('${f.id}','${a.id}','creditNotes',this.value)" onblur="setApplField('${f.id}','${a.id}','creditNotes',this.value)"/></div>
+        </div>
+      </div>
+      <div><label class="flabel">SCREENING NOTES</label><textarea class="fi" rows="2" placeholder="Additional notes, concerns, qualifications…" onchange="setApplField('${f.id}','${a.id}','notes',this.value)" onblur="setApplField('${f.id}','${a.id}','notes',this.value)" style="resize:none">${esc(a.notes||"")}</textarea></div>
+    </div>`;
+  }).join("");
+  return`${applCards}
+  <button class="btn-ghost-sm" onclick="addApplicant('${f.id}')" style="margin-top:4px">+ Add Applicant</button>`;
+}
+
+function rInfo(f){
+  return`<div class="sec">
+    <div class="sec-hdr"><span class="sec-title">Property & Deal Info</span></div>
+    <div class="sec-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div><label class="flabel">PROPERTY ADDRESS</label><input class="fi" value="${esc(f.address||"")}" placeholder="Address…" onchange="setField('${f.id}','address',this.value)" onblur="setField('${f.id}','address',this.value)"/></div>
+        <div>
+          <label class="flabel">OWNER / LANDLORD</label>
+          <input class="fi" value="${esc(f.owner||"")}" placeholder="Owner…" onchange="setField('${f.id}','owner',this.value)" onblur="setField('${f.id}','owner',this.value)"/>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">
+            ${["individual","llc","trust","corporation"].map(et=>{
+              const labels={individual:"Individual",llc:"LLC",trust:"Trust",corporation:"Corp"};
+              const active=(f.ownerEntity||"individual")===et;
+              return`<button onclick="setField('${f.id}','ownerEntity','${et}')" style="cursor:pointer;padding:2px 8px;font-size:9px;font-family:'Lato',sans-serif;font-weight:700;border-radius:20px;border:1px solid ${active?"#8a7a50":"#d0c8b8"};background:${active?"#3a3020":"transparent"};color:${active?"#f5f0e8":"#8a7a60"}">${labels[et]}</button>`;
+            }).join("")}
+          </div>
+          ${(f.ownerEntity&&f.ownerEntity!=="individual")?`<input class="fi" style="margin-top:4px;font-size:11px" value="${esc(f.ownerLegalName||"")}" placeholder="Full legal name (LLC / Trust / Corp)…" onchange="setField('${f.id}','ownerLegalName',this.value)" onblur="setField('${f.id}','ownerLegalName',this.value)"/>`:""}
+        </div>
+        <div><label class="flabel">MONTHLY RENT</label><input class="fi" value="${esc(f.rent||"")}" placeholder="$0,000/mo" onchange="setField('${f.id}','rent',this.value)" onblur="setField('${f.id}','rent',this.value)"/></div>
+        <div><label class="flabel">SECURITY DEPOSIT</label><input class="fi" value="${esc(f.deposit||"")}" placeholder="$0,000" onchange="setField('${f.id}','deposit',this.value)" onblur="setField('${f.id}','deposit',this.value)"/></div>
+        <div><label class="flabel">MOVE-IN DATE</label><input class="fi" type="date" value="${esc(f.moveInDate||"")}" onchange="setField('${f.id}','moveInDate',this.value)"/></div>
+        <div><label class="flabel">LEASE START</label><input class="fi" type="date" value="${esc(f.leaseStart||"")}" onchange="setField('${f.id}','leaseStart',this.value)"/></div>
+        <div><label class="flabel">LEASE END</label><input class="fi" type="date" value="${esc(f.leaseEnd||"")}" onchange="setField('${f.id}','leaseEnd',this.value)"/></div>
+        <div><label class="flabel">TC FEE</label><input class="fi" value="${esc(f.tcFee||"")}" placeholder="e.g. $450" onchange="setField('${f.id}','tcFee',this.value)" onblur="setField('${f.id}','tcFee',this.value)"/></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="flabel">GOOGLE DRIVE FOLDER</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input class="fi" value="${esc(f.driveFolder||"")}" placeholder="Paste Drive folder link…" onchange="setField('${f.id}','driveFolder',this.value)" onblur="setField('${f.id}','driveFolder',this.value)" style="flex:1"/>
+          ${f.driveFolder?`<a href="${esc(f.driveFolder)}" target="_blank" style="font-size:10px;color:#8a7a50;font-weight:700;white-space:nowrap;text-decoration:none;background:#f0ebe0;padding:6px 12px;border-radius:20px;border:1px solid #d0c8b8">↗ Open</a>`:""}
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;width:fit-content">
+          <input type="checkbox" ${f.bmFileOpen?"checked":""} onchange="setField('${f.id}','bmFileOpen',this.checked);rMain();" style="accent-color:#3a7a4a;width:14px;height:14px;cursor:pointer"/>
+          <span style="font-size:11px;font-weight:700;color:${f.bmFileOpen?"#2a6a3a":"#8a7a60"}">BM File Open</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-hdr"><span class="sec-title">Agent Information</span></div>
+    <div class="sec-body">
+      <div style="margin-bottom:14px">
+        <div style="font-size:10px;color:#b0a890;font-weight:700;letter-spacing:1px;margin-bottom:8px">OUR AGENT</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+          <div><label class="flabel">NAME</label>
+            <select class="fi" onchange="setAgentFromSelect('${f.id}','agent',this.value)">
+              <option value="">Select…</option>
+              <optgroup label="Team Agents">
+                ${["Nancy Gonzalez","Ethan Plemmons","Heather Savoy","Jason Chinchilla","Ki Contreras","Maya Worthy","Luke Simon","Jennifer Landon"].map(n=>`<option${f.agent===n?" selected":""}>${n}</option>`).join("")}
+              </optgroup>
+              <optgroup label="Independent"><option${f.agent==="Casi Kneebone"?" selected":""}>Casi Kneebone</option></optgroup>
+              <optgroup label="Referral">${["Artur Aleksanyan","Annie Mochrie"].map(n=>`<option${f.agent===n?" selected":""}>${n}</option>`).join("")}</optgroup>
+              <option value="__other__"${f.agent&&!AGENTS[f.agent]?" selected":""}>Other…</option>
+            </select>
+          </div>
+          <div><label class="flabel">DRE #</label><input class="fi" value="${esc(f.agentDRE||"")}" placeholder="DRE…" onchange="setField('${f.id}','agentDRE',this.value)" onblur="setField('${f.id}','agentDRE',this.value)"/></div>
+          <div><label class="flabel">EMAIL</label><input class="fi" value="${esc(f.agentEmail||"")}" placeholder="Email…" onchange="setField('${f.id}','agentEmail',this.value)" onblur="setField('${f.id}','agentEmail',this.value)"/></div>
+          <div><label class="flabel">PHONE</label><input class="fi" value="${esc(f.agentPhone||"")}" placeholder="Phone…" onchange="setField('${f.id}','agentPhone',this.value)" onblur="setField('${f.id}','agentPhone',this.value)"/></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#b0a890;font-weight:700;letter-spacing:1px;margin-bottom:8px">CO-AGENT / OPPOSING AGENT (if applicable)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:8px">
+          <div><label class="flabel">NAME</label><input class="fi" value="${esc(f.coAgent||"")}" placeholder="Co-agent name…" onchange="setField('${f.id}','coAgent',this.value)" onblur="setField('${f.id}','coAgent',this.value)"/></div>
+          <div><label class="flabel">DRE #</label><input class="fi" value="${esc(f.coAgentDRE||"")}" placeholder="DRE…" onchange="setField('${f.id}','coAgentDRE',this.value)" onblur="setField('${f.id}','coAgentDRE',this.value)"/></div>
+          <div><label class="flabel">EMAIL</label><input class="fi" value="${esc(f.coAgentEmail||"")}" placeholder="Email…" onchange="setField('${f.id}','coAgentEmail',this.value)" onblur="setField('${f.id}','coAgentEmail',this.value)"/></div>
+          <div><label class="flabel">BROKERAGE</label><input class="fi" value="${esc(f.coAgentBrokerage||"")}" placeholder="Brokerage…" onchange="setField('${f.id}','coAgentBrokerage',this.value)" onblur="setField('${f.id}','coAgentBrokerage',this.value)"/></div>
+          <div><label class="flabel">BROKERAGE DRE #</label><input class="fi" value="${esc(f.coAgentBrokerageDRE||"")}" placeholder="DRE…" onchange="setField('${f.id}','coAgentBrokerageDRE',this.value)" onblur="setField('${f.id}','coAgentBrokerageDRE',this.value)"/></div>
+          <div><label class="flabel">ASSISTANT NAME</label><input class="fi" value="${esc(f.coAgentAssistant||"")}" placeholder="Assistant name…" onchange="setField('${f.id}','coAgentAssistant',this.value)" onblur="setField('${f.id}','coAgentAssistant',this.value)"/></div>
+          <div><label class="flabel">ASSISTANT EMAIL</label><input class="fi" value="${esc(f.coAgentAssistantEmail||"")}" placeholder="Assistant email…" onchange="setField('${f.id}','coAgentAssistantEmail',this.value)" onblur="setField('${f.id}','coAgentAssistantEmail',this.value)"/></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-hdr"><span class="sec-title">General Notes</span></div>
+    <div class="sec-body">
+      <textarea class="fi" rows="4" placeholder="General notes…" onchange="setField('${f.id}','notes',this.value)" onblur="setField('${f.id}','notes',this.value)" style="resize:vertical">${esc(f.notes||"")}</textarea>
+    </div>
+  </div>`;
+}
+
+/* ── ACTIONS ── */
+function setActive(id){AID=id;VIEW="file";FTAB="checklist";render();save();}
+function goToDash(){VIEW="dash";render();save();}
+function swFTab(t){FTAB=t;rMain();bindOnclicks(document.getElementById("main"));}
+
+function openEmailModal(toEmail,subject,body){
+  const modal=document.createElement("div");
+  modal.style.cssText="position:fixed;inset:0;background:rgba(50,40,20,.5);display:flex;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(6px)";
+  modal.innerHTML=`<div style="background:#faf7f2;border:1px solid #e0d8c8;border-radius:16px;padding:24px;width:600px;max-width:95vw;max-height:90vh;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 40px rgba(0,0,0,.15)">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:#2a2010">Agent Update</span>
+      <button id="au-close" style="background:none;border:none;color:#a09880;font-size:20px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div><label style="font-size:9px;color:#8a7a60;font-weight:700;letter-spacing:1.5px;display:block;margin-bottom:3px">TO</label>
+        <input id="au-to" value="${toEmail}" placeholder="Agent email…" style="width:100%;background:#f5f0e8;border:1px solid #d8d0c0;border-radius:7px;padding:7px 10px;font-family:'Lato',sans-serif;font-size:12px;color:#3a3020"/></div>
+      <div><label style="font-size:9px;color:#8a7a60;font-weight:700;letter-spacing:1.5px;display:block;margin-bottom:3px">SUBJECT</label>
+        <input id="au-subject" value="${subject.replace(/"/g,'&quot;')}" style="width:100%;background:#f5f0e8;border:1px solid #d8d0c0;border-radius:7px;padding:7px 10px;font-family:'Lato',sans-serif;font-size:12px;color:#3a3020"/></div>
+      <div><label style="font-size:9px;color:#8a7a60;font-weight:700;letter-spacing:1.5px;display:block;margin-bottom:3px">MESSAGE — EDIT BEFORE SENDING</label>
+        <textarea id="au-body" style="width:100%;min-height:260px;background:#f5f0e8;border:1px solid #d8d0c0;border-radius:7px;padding:10px 12px;font-family:'Lato',sans-serif;font-size:11px;color:#3a3020;line-height:1.6;resize:vertical">${body.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button id="au-mailto" style="flex:1;background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:10px 20px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer">✉ Open in Email App</button>
+      <button id="au-copy" style="flex:1;background:transparent;color:#8a7a60;border:1px solid #d0c8b8;border-radius:20px;padding:10px 20px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer">📋 Copy to Clipboard</button>
+      <button id="au-close2" style="background:transparent;color:#a09880;border:1px solid #d0c8b8;border-radius:20px;padding:10px 16px;font-size:11px;font-family:'Lato',sans-serif;cursor:pointer">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  const close=()=>document.body.removeChild(modal);
+  modal.querySelector("#au-close").addEventListener("click",close);
+  modal.querySelector("#au-close2").addEventListener("click",close);
+  modal.addEventListener("click",e=>{if(e.target===modal)close();});
+  modal.querySelector("#au-mailto").addEventListener("click",()=>{
+    const to=encodeURIComponent(modal.querySelector("#au-to").value.trim());
+    const subj=encodeURIComponent(modal.querySelector("#au-subject").value);
+    const bd=encodeURIComponent(modal.querySelector("#au-body").value);
+    window.location.href=`mailto:${to}?subject=${subj}&body=${bd}`;
+  });
+  modal.querySelector("#au-copy").addEventListener("click",()=>{
+    const full=`To: ${modal.querySelector("#au-to").value}\nSubject: ${modal.querySelector("#au-subject").value}\n\n${modal.querySelector("#au-body").value}`;
+    const btn=modal.querySelector("#au-copy");
+    navigator.clipboard.writeText(full).then(()=>{
+      btn.textContent="✓ Copied!";btn.style.background="#e8f4e8";btn.style.borderColor="#90c898";btn.style.color="#2a6a3a";
+      setTimeout(()=>{btn.textContent="📋 Copy to Clipboard";btn.style.cssText="";},2000);
+    }).catch(()=>{modal.querySelector("#au-body").select();document.execCommand("copy");});
+  });
+}
+
+function sendAgentUpdate(fid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  const agInfo=AGENTS[f.agent]||{};
+  const agEmail=f.agentEmail||agInfo.email||"";
+  const agName=f.agent||"";
+  const addr=f.address||"(address)";
+  const firstName=agName?agName.split(" ")[0]:"";
+  const moveIn=f.moveInDate?fmtShort(f.moveInDate):"TBD";
+  const moveDays=f.moveInDate?daysUntil(f.moveInDate):null;
+  const moveLine=moveDays!==null?(moveDays<0?`${Math.abs(moveDays)} days past move-in`:moveDays===0?"Move-in TODAY":`${moveDays} days to move-in`):"";
+
+  // Applicant status summary
+  const approved=(f.applicants||[]).filter(a=>a.status==="approved");
+  const pending=(f.applicants||[]).filter(a=>a.status==="pending"&&a.name);
+  const denied=(f.applicants||[]).filter(a=>a.status==="denied"&&a.name);
+
+  // Pending checklist items
+  const pendingItems=[];
+  SECTIONS.forEach(s=>{
+    const items=[...s.items,...((f.customItems||{})[s.id]||[])];
+    items.forEach(i=>{
+      const c=(f.checks||{})[i.id]||{};
+      if(!c.done&&!c.na)pendingItems.push({label:i.label,section:s.title});
+    });
+  });
+  const doneCount=SECTIONS.reduce((acc,s)=>{
+    const items=[...s.items,...((f.customItems||{})[s.id]||[])];
+    return acc+items.filter(i=>{const c=(f.checks||{})[i.id]||{};return c.done;}).length;
+  },0);
+
+  const lines=[];
+  lines.push(firstName?`Hi ${firstName},`:"Hi,");
+  lines.push("");
+  lines.push(`Here's a rental file update for ${addr}:`);
+  if(f.owner)lines.push(`Owner/Landlord: ${f.owner}`);
+  if(f.rent)lines.push(`Monthly Rent: ${f.rent}/mo`);
+  if(f.deposit)lines.push(`Deposit: ${f.deposit}`);
+  if(moveIn!=="TBD")lines.push(`Move-In: ${moveIn}${moveLine?" — "+moveLine:""}`);
+  lines.push(`Progress: ${progFile(f)}% (${doneCount} items complete)`);
+
+  // Applicant status
+  if(approved.length||pending.length||denied.length){
+    lines.push("");
+    lines.push("APPLICANT STATUS");
+    lines.push("─────────────────────────────");
+    approved.forEach(a=>lines.push(`✓  ${a.name} — Approved${a.creditScore?" (Score: "+a.creditScore+")":""}`));
+    pending.forEach(a=>lines.push(`⟳  ${a.name} — Screening in progress`));
+    denied.forEach(a=>lines.push(`✗  ${a.name} — Denied`));
+  }
+
+  // Pending docs grouped by section
+  const bySection={};
+  pendingItems.forEach(i=>{if(!bySection[i.section])bySection[i.section]=[];bySection[i.section].push(i.label);});
+  if(Object.keys(bySection).length){
+    lines.push("");
+    lines.push("PENDING ITEMS");
+    lines.push("─────────────────────────────");
+    Object.entries(bySection).forEach(([sec,items])=>{
+      lines.push(`${sec}:`);
+      items.slice(0,4).forEach(l=>lines.push(`  →  ${l}`));
+      if(items.length>4)lines.push(`  →  …and ${items.length-4} more`);
+    });
+  }
+
+  lines.push("");
+  lines.push("[Add any notes here]");
+  lines.push("");
+  lines.push("Please let me know if you need anything.");
+  lines.push("");
+  lines.push("Best,");
+  lines.push(LRG.tcName||"Mia Hanada");
+  lines.push("TC | Landon Realty Group");
+  lines.push(LRG.tcEmail||"Mia@lrgla.com");
+
+  const subject=`Rental Update — ${addr}${moveIn!=="TBD"?" | Move-In "+moveIn:""}`;
+  openEmailModal(agEmail,subject,lines.join("\n"));
+}
+function setField(fid,k,v){const f=FILES.find(x=>x.id===fid);if(f){f[k]=v;rSidebar();save();}}
+function setAgentFromSelect(fid,field,val){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(val==="__other__"){f.agent="";f.agentDRE="";f.agentEmail="";f.agentPhone="";}
+  else if(AGENTS[val]){f.agent=val;f.agentDRE=AGENTS[val].dre;f.agentEmail=AGENTS[val].email;f.agentPhone=AGENTS[val].phone;}
+  else{f.agent=val;}
+  rMain();save();
+}
+function setCheck(fid,iid,val){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(!f.checks[iid])f.checks[iid]={};
+  f.checks[iid].done=val;f.checks[iid].date=val?new Date().toISOString().slice(0,10):"";
+  rMain();save();
+}
+function setNote(fid,iid,v){const f=FILES.find(x=>x.id===fid);if(!f)return;if(!f.checks[iid])f.checks[iid]={};f.checks[iid].note=v;save();}
+function setSigningStatus(fid,iid,key,val){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(!f.checks[iid])f.checks[iid]={};
+  f.checks[iid][key]=val;
+  // Auto-check the item as done when fully executed
+  if(key==="fe"&&val){f.checks[iid].done=true;f.checks[iid].date=new Date().toISOString().slice(0,10);}
+  rMain();save();
+}
+function setNA(fid,iid,val){const f=FILES.find(x=>x.id===fid);if(!f)return;if(!f.checks[iid])f.checks[iid]={};f.checks[iid].na=val;if(val)f.checks[iid].done=false;rMain();save();}
+function setRentalDone(fid,val){const f=FILES.find(x=>x.id===fid);if(f){f.rentalDone=val;rMain();save();}}
+function setDashNote(fid,v){const f=FILES.find(x=>x.id===fid);if(f){f.dashNote=v;save();}}
+function setApplField(fid,aid,k,v){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  const a=(f.applicants||[]).find(x=>x.id===aid);if(a){a[k]=v;rMain();save();}
+}
+function addApplicant(fid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(!f.applicants)f.applicants=[];
+  f.applicants.push(defApplicant(f.applicants.length+1));
+  rMain();save();
+}
+function rmApplicant(fid,aid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  f.applicants=(f.applicants||[]).filter(a=>a.id!==aid);
+  rMain();save();
+}
+function addCustomItem(fid,sid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  const el=document.getElementById("ci-"+sid+"-"+fid);
+  const label=(el?.value||"").trim();if(!label){el?.focus();return;}
+  if(!f.customItems)f.customItems={};if(!f.customItems[sid])f.customItems[sid]=[];
+  const id="ci_"+Date.now();
+  f.customItems[sid].push({id,label});f.checks[id]={done:false,na:false,date:"",note:""};
+  el.value="";rMain();save();
+}
+function rmCustomItem(fid,sid,iid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(f.customItems&&f.customItems[sid])f.customItems[sid]=f.customItems[sid].filter(i=>i.id!==iid);
+  rMain();save();
+}
+function rmFile(fid){
+  if(!confirm("Remove this rental file?"))return;
+  FILES=FILES.filter(f=>f.id!==fid);
+  if(AID===fid)AID=FILES[0]?.id||null;
+  VIEW="dash";render();save();
+}
+
+/* ── MODAL ── */
+function openModal(){document.getElementById("modal").style.display="flex";}
+function closeModal(){document.getElementById("modal").style.display="none";}
+function createFile(){
+  const addr=document.getElementById("m-address").value.trim();
+  if(!addr){document.getElementById("m-address").focus();return;}
+  const agentVal=document.getElementById("m-agent").value;
+  const f=nFile();
+  f.address=addr;
+  f.owner=document.getElementById("m-owner").value;
+  f.rent=document.getElementById("m-rent").value;
+  f.moveInDate=document.getElementById("m-movein").value;
+  if(agentVal&&agentVal!=="__other__"&&AGENTS[agentVal]){
+    f.agent=agentVal;f.agentDRE=AGENTS[agentVal].dre;f.agentEmail=AGENTS[agentVal].email;f.agentPhone=AGENTS[agentVal].phone;
+  }else{f.agent=agentVal;}
+  FILES.push(f);AID=f.id;VIEW="file";FTAB="checklist";
+  closeModal();render();save();
+}
+
+/* ── EXPORT / IMPORT ── */
+function exportData(){
+  try{
+    const data=JSON.stringify({files:FILES,activeId:AID,dashNotes:DASH_NOTES,exportedAt:new Date().toISOString()},null,2);
+    const blob=new Blob([data],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download="rental-backup-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    const el=document.getElementById("save-status");
+    el.textContent="✓ exported";el.style.color="#3a7a50";
+    setTimeout(()=>{el.textContent="● saved";el.style.color="#90a880";},2500);
+  }catch(e){alert("Export failed: "+e.message);}
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  if(!confirm("Import this backup? Current data will be replaced.\n\nFile: "+file.name)){input.value="";return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d.files||!Array.isArray(d.files)){alert("Invalid backup file.");input.value="";return;}
+      localStorage.setItem(SK,JSON.stringify({files:d.files,activeId:d.activeId||null,dashNotes:d.dashNotes||""}));
+      
+DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Rental Tracker — LRG</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:#f5f0e8;color:#3a3020;font-family:'Lato','Helvetica Neue',sans-serif;font-size:13px}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#f0ebe0}::-webkit-scrollbar-thumb{background:#d0c8b8;border-radius:2px}
+input,textarea,select{outline:none;font-family:inherit}
+input::placeholder,textarea::placeholder{color:#c0b8a8}
+#app{display:flex;flex-direction:column;height:100vh}
+#topbar{background:#faf7f2;border-bottom:1px solid #e0d8c8;padding:10px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px;flex-wrap:wrap}
+.brand{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;letter-spacing:.5px;color:#2a2010}
+.brand-sub{font-size:9px;color:#b0a890;letter-spacing:2.5px;font-weight:700;margin-left:10px}
+.top-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#save-status{font-size:10px;letter-spacing:1px;color:#90a880}
+.btn-primary{background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:6px 16px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer;letter-spacing:.5px}
+.btn-primary:hover{opacity:.82}
+.btn-ghost-sm{background:transparent;border:1px solid #d0c8b8;border-radius:20px;padding:5px 13px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer;color:#8a7a60;letter-spacing:.4px}
+.btn-ghost-sm:hover{background:#ede8de}
+#body{display:flex;flex:1;overflow:hidden}
+#sidebar{width:200px;background:#f0ebe0;border-right:1px solid #e0d8c8;overflow-y:auto;flex-shrink:0}
+#main-scroll{flex:1;overflow-y:auto}
+#main{padding:20px 26px 60px}
+.tx-tab{padding:12px 14px;border-bottom:1px solid #e0d8c8;cursor:pointer;transition:background .14s;border-left:3px solid transparent}
+.tx-tab:hover{background:#ede8de}
+.tx-tab.active{background:#faf7f2;border-left-color:#8a7a50}
+.t-addr{font-size:11px;color:#7a7060;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.t-client{font-size:10px;color:#a09880;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb-out{background:#e0d8c8;border-radius:6px;height:4px;margin-top:6px}
+.pb-in{height:4px;border-radius:6px;background:linear-gradient(90deg,#8a7a50,#b0a060);transition:width .4s}
+.t-pct{font-size:9px;color:#b0a890;margin-top:2px}
+.fi{background:#faf7f2;border:1px solid #d8d0c0;border-radius:7px;color:#3a3020;padding:7px 10px;font-family:'Lato',sans-serif;font-size:12px;transition:border-color .18s;width:100%}
+.fi:focus{border-color:#a09060}
+.fi-sm{background:#f5f0e8;border:1px solid #d8d0c0;border-radius:6px;color:#3a3020;padding:5px 8px;font-family:'Lato',sans-serif;font-size:11px}
+.flabel{font-size:9px;color:#8a7a60;font-weight:700;letter-spacing:1.5px;display:block;margin-bottom:4px}
+.sec{background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;margin-bottom:16px;overflow:hidden}
+.sec-hdr{padding:11px 18px;border-bottom:1px solid #ece4d8;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:600;font-style:italic;color:#4a4030}
+.sec-body{padding:14px 18px}
+.cl-item{display:flex;align-items:flex-start;gap:10px;padding:8px 16px;border-bottom:1px solid #f0ebe0;transition:background .12s}
+.cl-item:last-child{border-bottom:none}
+.cl-item:hover{background:#f8f5f0}
+.cl-item.done-item{background:#f5faf5}
+.cl-item.na-item{opacity:.55}
+.cl-cb{width:15px;height:15px;accent-color:#8a7a50;cursor:pointer;flex-shrink:0;margin-top:1px}
+.cl-label{font-size:11px;color:#3a3020;cursor:pointer;flex:1;line-height:1.4}
+.cl-label.checked{color:#8a9a80;text-decoration:line-through}
+.cl-label.na{color:#b0a890;text-decoration:line-through}
+.na-toggle{font-size:9px;color:#c0b8a8;font-weight:700;cursor:pointer;padding:2px 7px;border:1px solid #e0d8c8;border-radius:10px;white-space:nowrap;background:transparent;flex-shrink:0}
+.na-toggle.active{color:#b08040;border-color:#d4c080;background:#fff8e8}
+.cl-note{font-size:10px;background:transparent;border:none;border-bottom:1px solid #ece4d8;width:100%;font-family:'Lato',sans-serif;color:#7a6a50;padding:2px 0;margin-top:3px}
+.cl-note:focus{outline:none;border-bottom-color:#a09060}
+.add-item-bar{display:flex;gap:8px;align-items:center;padding:10px 16px;border-top:1px solid #ece4d8;background:#f8f4ee;flex-wrap:wrap}
+.prog-wrap{background:#faf7f2;border:1px solid #e0d8c8;border-radius:10px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.prog-bar-out{flex:1;min-width:80px;background:#e8e0d0;border-radius:6px;height:6px}
+.prog-bar-in{height:6px;border-radius:6px;background:linear-gradient(90deg,#8a7a50,#b0a060);transition:width .5s}
+.hdr-card{background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;padding:16px 18px;margin-bottom:16px}
+/* Applicant card */
+.appl-card{background:#faf7f2;border:1px solid #e0d8c8;border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.appl-card.approved{border-color:#90c898;background:#f5faf5}
+.appl-card.denied{border-color:#d49090;background:#fdf5f5;opacity:.8}
+.status-pill{display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer}
+/* Dashboard */
+.dash-card{background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;padding:16px 20px;margin-bottom:14px;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.dash-card:hover{box-shadow:0 2px 12px rgba(58,48,32,.08);border-color:#c8b870}
+.dash-card.done-card{background:#f5faf5;border-color:#b8d8b8;opacity:.85}
+.dash-prog{background:#e8e0d0;border-radius:6px;height:5px;margin-top:8px}
+.dash-prog-fill{height:5px;border-radius:6px;background:linear-gradient(90deg,#8a7a50,#b0a060);transition:width .4s}
+.overlay{position:fixed;inset:0;background:rgba(50,40,20,.42);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(5px)}
+.modal{background:#faf7f2;border:1px solid #e0d8c8;border-radius:16px;padding:26px;width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.13)}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#2a2010;margin-bottom:2px}
+.modal-sub{font-size:9px;color:#b0a890;letter-spacing:2px;font-weight:700;margin-bottom:16px}
+.field-wrap{margin-bottom:11px}
+.field-wrap label{display:block;font-size:9px;color:#8a7a60;letter-spacing:1.5px;font-weight:700;margin-bottom:4px}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+.btn-create{flex:1;background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:10px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer}
+.btn-cancel{flex:1;background:transparent;color:#8a7a60;border:1px solid #d0c8b8;border-radius:20px;padding:10px;font-size:11px;font-family:'Lato',sans-serif;cursor:pointer}
+.empty-dash{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;color:#c0b8a8;gap:12px}
+/* Tabs inside file */
+.tab-bar{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tab-btn{cursor:pointer;padding:6px 15px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;letter-spacing:.6px;border-radius:20px;transition:all .14s}
+.tab-btn.active{background:#3a3020;color:#f5f0e8;border:1px solid #3a3020}
+.tab-btn:not(.active){background:transparent;color:#8a7a60;border:1px solid #d0c8b8}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div><span class="brand">Rental Tracker</span><span class="brand-sub">LANDON REALTY GROUP</span></div>
+      <button id="dash-btn" class="btn-ghost-sm" onclick="goToDash()">⌂ Dashboard</button>
+    </div>
+    <div class="top-right">
+      <span id="save-status">● saved</span>
+      <span id="file-count"></span>
+      <button class="btn-ghost-sm" onclick="exportData()" title="Download backup">⬇ Export</button>
+      <label class="btn-ghost-sm" title="Restore from backup">⬆ Import<input type="file" accept=".json" onchange="importData(this)" style="display:none"/></label>
+      <button class="btn-primary" onclick="openModal()">+ New Rental</button>
+    </div>
+  </div>
+  <div id="body">
+    <div id="sidebar"></div>
+    <div id="main-scroll"><div id="main"></div></div>
+  </div>
+</div>
+
+<div id="modal" class="overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2>New Rental File</h2>
+    <p class="modal-sub">FILL IN WHAT YOU KNOW — EDIT ANYTIME</p>
+    <div class="field-wrap"><label>PROPERTY ADDRESS</label><input class="fi" id="m-address" placeholder="123 Main St, Unit 4, Burbank CA…"/></div>
+    <div class="field-wrap"><label>OWNER / LANDLORD</label><input class="fi" id="m-owner" placeholder="Owner name…"/></div>
+    <div class="field-wrap"><label>OUR AGENT</label>
+      <select class="fi" id="m-agent">
+        <option value="">Select agent…</option>
+        <optgroup label="Team Agents">
+          <option>Nancy Gonzalez</option><option>Ethan Plemmons</option><option>Heather Savoy</option>
+          <option>Jason Chinchilla</option><option>Ki Contreras</option><option>Maya Worthy</option>
+          <option>Luke Simon</option><option>Jennifer Landon</option>
+        </optgroup>
+        <optgroup label="Independent"><option>Casi Kneebone</option></optgroup>
+        <optgroup label="Referral"><option>Artur Aleksanyan</option><option>Annie Mochrie</option></optgroup>
+      </select>
+    </div>
+    <div class="field-wrap"><label>MONTHLY RENT</label><input class="fi" id="m-rent" placeholder="$0,000/mo"/></div>
+    <div class="field-wrap"><label>MOVE-IN DATE</label><input class="fi" type="date" id="m-movein"/></div>
+    <div class="modal-btns">
+      <button class="btn-create" onclick="createFile()">Create File</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SK="rental_tracker_v1";
+let FILES=[],AID=null,VIEW="dash",FTAB="checklist",DASH_NOTES="",STIMER=null;
+
+/* ── SECTIONS (LRG Lease Forms & Checklist) ── */
+const SECTIONS=[
+  {id:"listing_docs", title:"Listing Documents", color:"#d4a96a", items:[
+    {id:"ll_lease_agmt", label:"LL"},
+    {id:"ad_agency",     label:"AD (Owner)"},
+    {id:"rla_keybox",    label:"RLA-Keybox"},
+    {id:"adm_addendum",  label:"ADM"},
+    {id:"pre_move_prac", label:"Pre-Move-In Practice"},
+  ]},
+  {id:"lease", title:"Lease", color:"#b0a0d8", items:[
+    {id:"rlmm",        label:"RLMM",    signing:{hp:false,t:false,fe:false}},
+    {id:"rlmm_adm",    label:"RLMM ADM",signing:{hp:false,t:false,fe:false}},
+    {id:"lmd",         label:"LMD",     signing:{hp:false,t:false,fe:false}},
+    {id:"copy_checks", label:"Copy of Checks"},
+  ]},
+  {id:"applicant1", title:"Applicant #1", color:"#9ab8d0", items:[
+    {id:"lra_app1",    label:"LRA — Applicant #1"},
+    {id:"credit_app1", label:"Credit Report — Applicant 1"},
+    {id:"cadl_app1",   label:"CA DL — Applicant 1"},
+  ]},
+  {id:"applicant2", title:"Applicant #2", color:"#6a98c0", items:[
+    {id:"lra_app2",    label:"LRA — Applicant #2"},
+    {id:"credit_app2", label:"Credit Report — Applicant 2"},
+    {id:"cadl_app2",   label:"CA DL — Applicant 2"},
+  ]},
+  {id:"guarantor", title:"Guarantor (if applicable)", color:"#c8b090", items:[
+    {id:"guar_app",    label:"Guarantor Application"},
+    {id:"guar_credit", label:"Guarantor Credit Report"},
+    {id:"guar_id",     label:"Guarantor ID"},
+  ]},
+  {id:"tenant_side", title:"Tenant-Side Docs", color:"#a8c4a0", items:[
+    {id:"ad_tenant",   label:"AD (Tenant)"},
+    {id:"pool_waiver", label:"Pool Waiver"},
+  ]},
+  {id:"disclosures", title:"Disclosures", color:"#e8a890", items:[
+    {id:"atca",     label:"ATCA",  signing:true},
+    {id:"bed_bug",  label:"BBD",   signing:true},
+    {id:"fhda",     label:"FHDA",  signing:true},
+    {id:"klh_keybox",label:"KLH",  signing:true},
+    {id:"lpd",      label:"LPD",   signing:true},
+    {id:"mi",       label:"MI",    signing:true},
+    {id:"lrm",      label:"LRM",   signing:true},
+    {id:"rcjc",     label:"RCJC",  signing:true},
+    {id:"p_s_disc", label:"P&S",   signing:true},
+    {id:"rpod",     label:"RPOD",  signing:true},
+    {id:"tfhd",     label:"TFHD",  signing:true},
+    {id:"trbc",     label:"TRBC",  signing:true},
+    {id:"trpr",     label:"TRPR",  signing:true},
+    {id:"wcmd",     label:"WCMD",  signing:true},
+    {id:"wfa",      label:"WFA",   signing:true},
+    {id:"whsd",     label:"WHSD",  signing:true},
+  ]},
+];
+
+/* ── FACTORY ── */
+function defChecks(){
+  const c={};
+  SECTIONS.forEach(s=>s.items.forEach(i=>{
+    c[i.id]={done:false,na:false,date:"",note:"",
+      ...(i.signing!==undefined?{hpSigned:false,tSigned:false,fe:false}:{})
+    };
+  }));
+  return c;
+}function defApplicant(n){
+  return{id:"appl_"+Date.now()+"_"+n,num:n,name:"",email:"",phone:"",
+    employment:"",income:"",moveInDate:"",
+    creditPulled:false,creditScore:"",creditNotes:"",
+    status:"pending", // pending | approved | denied
+    notes:""};
+}
+function nFile(){
+  return{
+    id:"rt_"+Date.now(),
+    address:"",owner:"",ownerEntity:"individual",ownerLegalName:"",
+    agent:"",agentDRE:"",agentEmail:"",agentPhone:"",
+    coAgent:"",coAgentDRE:"",coAgentBrokerage:"",coAgentBrokerageDRE:"",coAgentEmail:"",
+    coAgentAssistant:"",coAgentAssistantEmail:"",
+    rent:"",deposit:"",moveInDate:"",leaseStart:"",leaseEnd:"",
+    tcFee:"",driveFolder:"",bmFileOpen:false,
+    checks:defChecks(),customItems:{},
+    applicants:[defApplicant(1)],
+    rentalDone:false,dashNote:"",notes:"",
+    createdAt:new Date().toISOString()
+  };
+}
+
+/* ── AGENTS ── */
+const AGENTS={
+  "Nancy Gonzalez":  {dre:"02122571",email:"Nancy@lrgla.com",   phone:"(818) 601-4190"},
+  "Ethan Plemmons":  {dre:"02109156",email:"Ethan@lrgla.com",   phone:"(870) 917-7473"},
+  "Heather Savoy":   {dre:"02220601",email:"Heather@lrgla.com", phone:"(747) 273-4529"},
+  "Jason Chinchilla":{dre:"02204413",email:"Jason@lrgla.com",   phone:"(818) 277-0224"},
+  "Ki Contreras":    {dre:"02245823",email:"Ki@lrgla.com",       phone:"(305) 546-2440"},
+  "Maya Worthy":     {dre:"02242272",email:"Maya@lrgla.com",     phone:"(818) 288-4393"},
+  "Luke Simon":      {dre:"02362589",email:"Luke@lrgla.com",     phone:"(818) 726-7116"},
+  "Jennifer Landon": {dre:"01281552",email:"Jennifer@lrgla.com", phone:"(818) 613-1767"},
+  "Casi Kneebone":   {dre:"01955896",email:"Kneebonerealty@gmail.com",phone:"(310) 871-7297"},
+  "Artur Aleksanyan":{dre:"02126509",email:"Artur@lrgla.com",   phone:"(818) 667-1701"},
+  "Annie Mochrie":   {dre:"02193921",email:"Annie@lrgla.com",   phone:"(818) 644-9789"},
+};
+
+/* ── STORAGE ── */
+function save(){
+  clearTimeout(STIMER);
+  const el=document.getElementById("save-status");
+  el.textContent="saving…";el.style.color="#a09060";
+  STIMER=setTimeout(()=>{
+    try{localStorage.setItem(SK,JSON.stringify({files:FILES,activeId:AID,dashNotes:DASH_NOTES}));el.textContent="● saved";el.style.color="#90a880";}
+    catch(e){el.textContent="● error";}
+  },400);
+}
+function load(){
+  try{
+    const r=localStorage.getItem(SK);
+    if(r){
+      const d=JSON.parse(r);
+      FILES=(d.files||[]).map(f=>({...nFile(),...f,checks:{...defChecks(),...(f.checks||{})},customItems:f.customItems||{},applicants:(f.applicants||[defApplicant(1)])}));
+      AID=d.activeId||null;DASH_NOTES=d.dashNotes||"";
+    }
+  }catch(e){}
+  if(!FILES.length){const f=nFile();FILES.push(f);AID=f.id;}
+  if(!AID||!FILES.find(f=>f.id===AID))AID=FILES[0]?.id||null;
+}
+
+/* ── PROGRESS ── */
+function progFile(f){
+  let done=0,total=0;
+  SECTIONS.forEach(s=>{
+    const items=[...s.items,...((f.customItems||{})[s.id]||[])];
+    items.forEach(i=>{const c=(f.checks||{})[i.id]||{};if(!c.na){total++;if(c.done)done++;}});
+  });
+  return total?Math.round(done/total*100):0;
+}
+
+/* ── UTILS ── */
+function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+function fmtShort(d){if(!d)return"";return new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"});}
+function daysUntil(d){if(!d)return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((new Date(d+"T00:00:00")-t)/86400000);}
+
+/* ── RENDER ── */
+function render(){
+  document.getElementById("file-count").textContent=FILES.length+" rental"+(FILES.length!==1?"s":"");
+  const db=document.getElementById("dash-btn");
+  if(db){db.style.background=VIEW==="dash"?"#3a3020":"transparent";db.style.color=VIEW==="dash"?"#f5f0e8":"#8a7a60";db.style.borderColor=VIEW==="dash"?"#3a3020":"#d0c8b8";}
+  rSidebar();
+  if(VIEW==="dash")rDashboard();
+  else rMain();
+}
+
+function rSidebar(){
+  document.getElementById("sidebar").innerHTML=FILES.map(f=>{
+    const p=progFile(f),ac=f.id===AID;
+    const approved=(f.applicants||[]).filter(a=>a.status==="approved").length;
+    return`<div class="tx-tab${ac?" active":""}" onclick="setActive('${f.id}')">
+      ${f.rentalDone?'<span style="font-size:8px;background:#e8f4e8;color:#2a6a3a;border-radius:3px;padding:1px 5px;font-weight:700;margin-bottom:3px;display:inline-block">✓ RENTED</span>':''}
+      <div class="t-addr">${esc(f.address||"New Rental")}</div>
+      <div class="t-client">${f.agent?esc(f.agent):"—"}${f.rent?" · "+esc(f.rent):""}</div>
+      ${approved>0?`<div style="font-size:9px;color:#2a6a3a;font-weight:700;margin-top:2px">✓ ${approved} approved</div>`:""}
+      <div class="pb-out"><div class="pb-in" style="width:${p}%"></div></div>
+      <div class="t-pct">${p}% complete</div>
+    </div>`;
+  }).join("");
+}
+
+function rDashboard(){
+  const main=document.getElementById("main");
+  const sorted=[...FILES].sort((a,b)=>{
+    if(a.rentalDone&&!b.rentalDone)return 1;
+    if(!a.rentalDone&&b.rentalDone)return-1;
+    const ad=a.moveInDate?new Date(a.moveInDate+"T00:00:00"):new Date("9999-01-01");
+    const bd=b.moveInDate?new Date(b.moveInDate+"T00:00:00"):new Date("9999-01-01");
+    return ad-bd;
+  });
+  const active=FILES.filter(f=>!f.rentalDone);
+
+  const cards=sorted.map(f=>{
+    const p=progFile(f);
+    const approved=(f.applicants||[]).filter(a=>a.status==="approved");
+    const pending=(f.applicants||[]).filter(a=>a.status==="pending");
+    const moveDays=f.moveInDate?daysUntil(f.moveInDate):null;
+    const cdColor=moveDays===null?"#a09880":moveDays<0?"#8a3a3a":moveDays<=3?"#7a5a00":"#3a6644";
+    const cdText=moveDays===null?"":moveDays<0?Math.abs(moveDays)+"d past move-in":moveDays===0?"Move-in TODAY":moveDays+"d to move-in";
+    return`<div class="dash-card${f.rentalDone?" done-card":""}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;cursor:pointer" data-open-file="${f.id}">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:3px">
+            ${f.agent?`<span style="font-size:9px;color:#a09880;font-weight:700">${esc(f.agent)}</span>`:""}
+            ${f.rentalDone?`<span style="font-size:9px;background:#e8f4e8;color:#2a6a3a;border-radius:3px;padding:1px 7px;font-weight:700">✓ RENTED</span>`:""}
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:${f.rentalDone?"#4a7a5a":"#2a2010"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(f.address||"Untitled Rental")}</div>
+          <div style="font-size:11px;color:#8a7a60;margin-top:2px">${esc(f.owner||"—")}${f.rent?` · <span style="font-weight:700;color:#3a3020">${esc(f.rent)}</span>/mo`:""}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">
+            ${approved.length>0?`<span style="font-size:9px;background:#e8f4e8;color:#2a6a3a;border-radius:3px;padding:1px 7px;font-weight:700">✓ ${approved.length} Approved</span>`:""}
+            ${pending.length>0?`<span style="font-size:9px;background:#fff8e8;color:#7a5a00;border-radius:3px;padding:1px 7px;font-weight:700">${pending.length} Screening</span>`:""}
+            ${f.bmFileOpen?`<span style="font-size:9px;background:#e8f0f8;color:#2a4a7a;border-radius:3px;padding:1px 7px;font-weight:700">✓ BM Open</span>`:`<span style="font-size:9px;background:#f5f0e8;color:#a09880;border-radius:3px;padding:1px 7px;font-weight:700">BM not open</span>`}
+            ${f.driveFolder?`<span style="font-size:9px;background:#e8f0f8;color:#2a4a7a;border-radius:3px;padding:1px 7px;font-weight:700">✓ Drive</span>`:""}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          ${cdText?`<div style="font-size:11px;font-weight:700;color:${cdColor}">${cdText}</div>`:""}
+          ${f.moveInDate?`<div style="font-size:9px;color:#b0a890;margin-top:1px">Move-in ${fmtShort(f.moveInDate)}</div>`:""}
+          <div style="font-size:10px;font-weight:700;color:#8a7a50;margin-top:5px">${p}%</div>
+        </div>
+      </div>
+      <div class="dash-prog"><div class="dash-prog-fill" style="width:${p}%"></div></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:${f.rentalDone?"#e8f4e8":"#f5f0e8"};border:1px solid ${f.rentalDone?"#90c898":"#d0c8b8"};border-radius:20px;padding:4px 12px;flex-shrink:0">
+          <input type="checkbox" ${f.rentalDone?"checked":""} data-rented-id="${f.id}" style="accent-color:#3a7a4a;width:13px;height:13px;cursor:pointer"/>
+          <span style="font-size:10px;font-weight:700;color:${f.rentalDone?"#2a6a3a":"#8a7a60"};white-space:nowrap">${f.rentalDone?"✓ Rented":"Mark Rented"}</span>
+        </label>
+        <button data-open-file="${f.id}" style="margin-left:auto;background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:4px 14px;font-size:10px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer">Open →</button>
+      </div>
+      <div style="margin-top:10px;border-top:1px solid #ece4d8;padding-top:10px">
+        <textarea data-dash-note="${f.id}" placeholder="Notes…" onchange="setDashNote('${f.id}',this.value)" onblur="setDashNote('${f.id}',this.value)"
+          style="width:100%;background:${f.dashNote?"#fffdf5":"#f8f5f0"};border:1px solid ${f.dashNote?"#d4c080":"#ece4d8"};border-radius:7px;padding:8px 11px;font-family:'Lato',sans-serif;font-size:11px;color:#3a3020;resize:none;line-height:1.5;min-height:34px"
+          rows="2">${esc(f.dashNote||"")}</textarea>
+      </div>
+    </div>`;
+  }).join("");
+
+  main.innerHTML=`
+    <div style="padding:0 0 4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#2a2010">Rental Dashboard</div>
+          <div style="font-size:10px;color:#b0a890;letter-spacing:1.5px;font-weight:700;margin-top:1px">${new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}).toUpperCase()}</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <div style="background:#faf7f2;border:1px solid #e0d8c8;border-radius:10px;padding:10px 16px;text-align:center;min-width:70px">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#2a2010">${active.length}</div>
+            <div style="font-size:9px;color:#b0a890;font-weight:700;letter-spacing:1px">ACTIVE</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;overflow:hidden;margin-bottom:20px">
+        <div style="padding:10px 16px;border-bottom:1px solid #ece4d8"><span style="font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:600;font-style:italic;color:#4a4030">Quick Notes</span></div>
+        <textarea id="dash-notes-ta" placeholder="Reminders, follow-ups…" onchange="DASH_NOTES=this.value;save();" onblur="DASH_NOTES=this.value;save();"
+          style="width:100%;min-height:80px;background:transparent;border:none;padding:12px 16px;font-family:'Lato',sans-serif;font-size:12px;color:#3a3020;resize:vertical;line-height:1.6"
+        >${esc(DASH_NOTES)}</textarea>
+      </div>
+      <div style="font-size:9px;color:#b0a890;font-weight:700;letter-spacing:2px;margin-bottom:10px">RENTALS — SORTED BY MOVE-IN DATE</div>
+      ${!FILES.length?`<div class="empty-dash"><span style="font-size:28px">🏠</span><span style="font-style:italic;font-size:13px">No rental files yet</span><button class="btn-primary" onclick="openModal()">+ Create First Rental</button></div>`:""}
+      ${cards}
+    </div>`;
+}
+
+function rMain(){
+  const main=document.getElementById("main");
+  if(VIEW==="dash"){rDashboard();return;}
+  const f=FILES.find(x=>x.id===AID);
+  if(!f){rDashboard();return;}
+  const p=progFile(f);
+  const tabs=[
+    {id:"checklist",label:"Checklist"},
+    {id:"applicants",label:"Applicants / Screening"},
+    {id:"info",label:"File Info"},
+  ];
+  const tabBar=`<div class="tab-bar">${tabs.map(t=>`<button class="tab-btn${FTAB===t.id?" active":""}" onclick="swFTab('${t.id}')">${t.label}</button>`).join("")}</div>`;
+
+  let content="";
+  if(FTAB==="checklist") content=rChecklist(f);
+  else if(FTAB==="applicants") content=rApplicants(f);
+  else content=rInfo(f);
+
+  main.innerHTML=`
+    <div class="hdr-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:#2a2010;margin-bottom:4px">${esc(f.address||"Untitled Rental")}</div>
+          <div style="font-size:11px;color:#8a7a60">${esc(f.owner||"—")}${f.agent?" · "+esc(f.agent):""}${f.rent?" · <strong>"+esc(f.rent)+"</strong>/mo":""}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+            ${f.bmFileOpen?`<span style="font-size:9px;background:#e8f4e8;color:#2a6a3a;border-radius:3px;padding:1px 7px;font-weight:700">✓ BM Open</span>`:`<span style="font-size:9px;background:#f5f0e8;color:#a09880;border-radius:3px;padding:1px 7px;font-weight:700">BM not open</span>`}
+            ${f.driveFolder?`<a href="${esc(f.driveFolder)}" target="_blank" style="font-size:9px;background:#e8f0f8;color:#2a4a7a;border-radius:3px;padding:1px 7px;font-weight:700;text-decoration:none">✓ Drive ↗</a>`:""}
+            ${f.tcFee?`<span style="font-size:9px;background:#f5f0e8;color:#8a7a50;border-radius:3px;padding:1px 7px;font-weight:700">TC Fee: ${esc(f.tcFee)}</span>`:""}
+          </div>
+        </div>
+        <button class="btn-ghost-sm" style="color:#a07070;border-color:#d0b8b8" onclick="rmFile('${f.id}')">✕ Close</button>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-bar-out"><div class="prog-bar-in" style="width:${p}%"></div></div>
+      <span style="font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:#2a2010">${p}%</span>
+      <span style="font-size:10px;color:#8a7a60">checklist complete</span>
+      <label style="display:flex;align-items:center;gap:7px;cursor:pointer;margin-left:auto;background:${f.rentalDone?"#e8f4e8":"#f5f0e8"};border:1px solid ${f.rentalDone?"#90c898":"#d0c8b8"};border-radius:20px;padding:5px 14px">
+        <input type="checkbox" ${f.rentalDone?"checked":""} onchange="setRentalDone('${f.id}',this.checked)" style="accent-color:#3a7a4a;width:13px;height:13px;cursor:pointer"/>
+        <span style="font-size:10px;font-weight:700;color:${f.rentalDone?"#2a6a3a":"#8a7a60"}">${f.rentalDone?"✓ Rented":"Mark Rented"}</span>
+      </label>
+    </div>
+
+    ${(()=>{
+      const urgent=[];
+      // Pending checklist items in key sections
+      ['listing_docs','lease','applicant1','tenant_side'].forEach(sid=>{
+        const s=SECTIONS.find(x=>x.id===sid);if(!s)return;
+        const items=[...s.items,...((f.customItems||{})[sid]||[])];
+        items.forEach(i=>{
+          const c=(f.checks||{})[i.id]||{};
+          if(!c.done&&!c.na)urgent.push({label:i.label,section:s.title,bg:"#fff8e8",border:"#d4c080",dot:"#c4a840",text:"#7a5a00"});
+        });
+      });
+      // Applicants pending
+      const pendingApplicants=(f.applicants||[]).filter(a=>a.status==="pending"&&a.name);
+      pendingApplicants.forEach(a=>urgent.push({label:`${a.name} — Screening Pending`,section:"Applicants",bg:"#e8f0f8",border:"#7090c8",dot:"#5070a8",text:"#2a3a68"}));
+      // Move-in approaching
+      if(f.moveInDate){
+        const d=daysUntil(f.moveInDate);
+        if(d!==null&&d<=7&&d>=0)urgent.push({label:"Move-In Approaching",section:`${fmtShort(f.moveInDate)} — ${d===0?"TODAY":d===1?"tomorrow":d+"d away"}`,bg:"#f0e8f8",border:"#b090c8",dot:"#8a60a8",text:"#4a2a68"});
+      }
+      if(!f.bmFileOpen)urgent.push({label:"BM File Not Opened",section:"File Setup",bg:"#fff8e8",border:"#d4c080",dot:"#c4a840",text:"#7a5a00"});
+      if(!f.driveFolder)urgent.push({label:"No Google Drive Folder",section:"File Setup",bg:"#f5f0e8",border:"#d0c8b8",dot:"#b0a890",text:"#8a7a60"});
+
+      if(!urgent.length)return`<div style="background:#f5faf5;border:1px solid #b8d8b8;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:16px">✓</span>
+        <span style="font-size:12px;color:#3a6644;font-weight:700">No urgent tasks — this rental is on track!</span>
+      </div>`;
+
+      const chips=urgent.slice(0,8).map(u=>`<div style="background:${u.bg};border:1px solid ${u.border};border-radius:8px;padding:9px 13px;display:flex;align-items:flex-start;gap:9px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${u.dot};flex-shrink:0;margin-top:3px"></div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:${u.text}">${esc(u.label)}</div>
+          <div style="font-size:10px;color:${u.text};opacity:.8;margin-top:1px">${esc(u.section)}</div>
+        </div>
+      </div>`).join("");
+      return`<div style="background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;padding:14px 16px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:600;font-style:italic;color:#4a4030">Urgent Tasks</span>
+          <span style="font-size:9px;color:#b0a890;font-weight:700;letter-spacing:1px">${urgent.length} item${urgent.length!==1?"s":""} need attention</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">${chips}</div>
+      </div>`;
+    })()}
+
+    <div class="tab-bar" style="align-items:center">
+      ${tabs.map(t=>`<button class="tab-btn${FTAB===t.id?" active":""}" onclick="swFTab('${t.id}')">${t.label}</button>`).join("")}
+      <button onclick="sendAgentUpdate('${f.id}')" style="margin-left:auto;background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:6px 16px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer;letter-spacing:.5px;flex-shrink:0">✉ Agent Update</button>
+    </div>
+    ${content}`;
+}
+
+function rChecklist(f){
+  return SECTIONS.map(s=>{
+    const items=[...s.items,...((f.customItems||{})[s.id]||[]).map(i=>({...i,custom:true}))];
+    const secDone=items.filter(i=>{const c=(f.checks||{})[i.id]||{};return c.done;}).length;
+    const secNa=items.filter(i=>{const c=(f.checks||{})[i.id]||{};return c.na;}).length;
+    const secTotal=items.length;
+    const pct=secTotal>0?Math.round(secDone/Math.max(secTotal-secNa,1)*100):0;
+    const rows=items.map(i=>{
+      const c=(f.checks||{})[i.id]||{};
+      const hasSigning=i.signing!==undefined;
+      // Signing pills — only for items with signing property
+      const signingHtml=hasSigning?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
+        ${[
+          {key:"hpSigned",label:"Housing Provider Signed",color:"#9ab8d0"},
+          {key:"tSigned", label:"Tenant Signed",          color:"#a8c4a0"},
+          {key:"fe",      label:"Fully Executed",          color:"#8a7a50"},
+        ].map(sp=>{
+          const active=!!c[sp.key];
+          return`<button onclick="setSigningStatus('${f.id}','${i.id}','${sp.key}',${!active})" style="cursor:pointer;padding:3px 10px;font-size:9px;font-family:'Lato',sans-serif;font-weight:700;border-radius:20px;border:1px solid ${active?sp.color:"#d8d0c0"};background:${active?sp.color+"22":"transparent"};color:${active?sp.color.replace("#9ab","#2a5").replace("#a8c","#2a5").replace("#8a7","#3a3"):"#b0a890"}">${active?"✓ ":""} ${sp.label}</button>`;
+        }).join("")}
+      </div>`:"";
+      return`<div class="cl-item${c.done?" done-item":""}${c.na?" na-item":""}">
+        <input type="checkbox" class="cl-cb" ${c.done?"checked":""} ${c.na?"disabled":""} onchange="setCheck('${f.id}','${i.id}',this.checked)" style="${c.na?"opacity:.4":""}"/>
+        <div style="flex:1;min-width:0">
+          <label class="cl-label${c.done?" checked":""}${c.na?" na":""}">${esc(i.label)}${i.custom?` <span style="font-size:8px;background:#ede8de;color:#8a7a60;border-radius:3px;padding:1px 4px;font-weight:700">custom</span>`:""}</label>
+          ${c.done&&c.date?`<div style="font-size:9px;color:#3a6644;font-weight:700;margin-top:1px">✓ ${fmtShort(c.date)}</div>`:""}
+          ${signingHtml}
+          <input type="text" class="cl-note" value="${esc(c.note||"")}" placeholder="Notes…" onchange="setNote('${f.id}','${i.id}',this.value)" onblur="setNote('${f.id}','${i.id}',this.value)"/>
+        </div>
+        <button class="na-toggle${c.na?" active":""}" onclick="setNA('${f.id}','${i.id}',${!c.na})">${c.na?"N/A ✓":"N/A"}</button>
+        ${i.custom?`<button style="background:none;border:none;color:#c0a898;cursor:pointer;font-size:12px;padding:0 2px" onclick="rmCustomItem('${f.id}','${s.id}','${i.id}')">×</button>`:""}
+      </div>`;
+    }).join("");
+    return`<div class="sec" style="border-left:3px solid ${s.color}">
+      <div class="sec-hdr" style="background:linear-gradient(90deg,${s.color}18,transparent)">
+        <span class="sec-title">${s.title}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:10px;color:#8a7a50;font-weight:700">${secDone}/${secTotal-secNa} done${secNa?" · "+secNa+" N/A":""}</span>
+          <div style="background:#e8e0d0;border-radius:4px;height:4px;width:60px"><div style="height:4px;border-radius:4px;background:${s.color};width:${pct}%"></div></div>
+        </div>
+      </div>
+      <div>${rows}</div>
+      <div class="add-item-bar">
+        <span style="font-size:10px;color:#8a7a60;font-weight:700;white-space:nowrap">+ ADD</span>
+        <input class="fi-sm" id="ci-${s.id}-${f.id}" placeholder="Custom item…" style="flex:1;min-width:100px" onkeydown="if(event.key==='Enter')addCustomItem('${f.id}','${s.id}')"/>
+        <button class="btn-ghost-sm" style="font-size:10px;padding:4px 12px" onclick="addCustomItem('${f.id}','${s.id}')">Add</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function rApplicants(f){
+  const applCards=(f.applicants||[]).map((a,idx)=>{
+    const statusColors={
+      pending: {bg:"#fff8e8",color:"#7a5a00",border:"#d4c080",label:"Pending / Screening"},
+      approved:{bg:"#e8f4e8",color:"#2a6a3a",border:"#90c898",label:"✓ Approved"},
+      denied:  {bg:"#f5e8e8",color:"#8a3a3a",border:"#d49090",label:"✗ Denied"},
+    };
+    const sc=statusColors[a.status]||statusColors.pending;
+    return`<div class="appl-card${a.status==="approved"?" approved":""}${a.status==="denied"?" denied":""}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <span style="font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600;color:#2a2010">Applicant ${idx+1}${a.name?" — "+esc(a.name):""}</span>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          ${["pending","approved","denied"].map(s=>`<button onclick="setApplField('${f.id}','${a.id}','status','${s}')" style="cursor:pointer;padding:3px 11px;font-size:10px;font-family:'Lato',sans-serif;font-weight:700;border-radius:20px;border:1px solid ${a.status===s?statusColors[s].border:"#d0c8b8"};background:${a.status===s?statusColors[s].bg:"transparent"};color:${a.status===s?statusColors[s].color:"#b0a890"}">${statusColors[s].label}</button>`).join("")}
+          ${idx>0?`<button onclick="rmApplicant('${f.id}','${a.id}')" style="background:none;border:none;color:#c0a898;cursor:pointer;font-size:13px;padding:0 4px">×</button>`:""}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label class="flabel">FULL NAME</label><input class="fi" value="${esc(a.name||"")}" placeholder="Full name…" onchange="setApplField('${f.id}','${a.id}','name',this.value)" onblur="setApplField('${f.id}','${a.id}','name',this.value)"/></div>
+        <div><label class="flabel">EMAIL</label><input class="fi" value="${esc(a.email||"")}" placeholder="Email…" onchange="setApplField('${f.id}','${a.id}','email',this.value)" onblur="setApplField('${f.id}','${a.id}','email',this.value)"/></div>
+        <div><label class="flabel">PHONE</label><input class="fi" value="${esc(a.phone||"")}" placeholder="Phone…" onchange="setApplField('${f.id}','${a.id}','phone',this.value)" onblur="setApplField('${f.id}','${a.id}','phone',this.value)"/></div>
+        <div><label class="flabel">EMPLOYER</label><input class="fi" value="${esc(a.employment||"")}" placeholder="Employer / self-employed…" onchange="setApplField('${f.id}','${a.id}','employment',this.value)" onblur="setApplField('${f.id}','${a.id}','employment',this.value)"/></div>
+        <div><label class="flabel">MONTHLY INCOME</label><input class="fi" value="${esc(a.income||"")}" placeholder="$0,000/mo" onchange="setApplField('${f.id}','${a.id}','income',this.value)" onblur="setApplField('${f.id}','${a.id}','income',this.value)"/></div>
+        <div><label class="flabel">DESIRED MOVE-IN</label><input class="fi" type="date" value="${esc(a.moveInDate||"")}" onchange="setApplField('${f.id}','${a.id}','moveInDate',this.value)"/></div>
+      </div>
+      <div style="background:#f5f0e8;border-radius:8px;padding:12px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" ${a.creditPulled?"checked":""} onchange="setApplField('${f.id}','${a.id}','creditPulled',this.checked)" style="accent-color:#8a7a50;width:13px;height:13px;cursor:pointer"/>
+            <span style="font-size:10px;font-weight:700;color:${a.creditPulled?"#3a6020":"#8a7a60"}">Credit Report Pulled</span>
+          </label>
+          <div style="flex:1;min-width:120px"><label class="flabel" style="margin-bottom:2px">CREDIT SCORE</label><input class="fi-sm" value="${esc(a.creditScore||"")}" placeholder="e.g. 720" style="width:100px" onchange="setApplField('${f.id}','${a.id}','creditScore',this.value)" onblur="setApplField('${f.id}','${a.id}','creditScore',this.value)"/></div>
+          <div style="flex:2;min-width:160px"><label class="flabel" style="margin-bottom:2px">CREDIT NOTES</label><input class="fi-sm" value="${esc(a.creditNotes||"")}" placeholder="Notes on credit report…" style="width:100%" onchange="setApplField('${f.id}','${a.id}','creditNotes',this.value)" onblur="setApplField('${f.id}','${a.id}','creditNotes',this.value)"/></div>
+        </div>
+      </div>
+      <div><label class="flabel">SCREENING NOTES</label><textarea class="fi" rows="2" placeholder="Additional notes, concerns, qualifications…" onchange="setApplField('${f.id}','${a.id}','notes',this.value)" onblur="setApplField('${f.id}','${a.id}','notes',this.value)" style="resize:none">${esc(a.notes||"")}</textarea></div>
+    </div>`;
+  }).join("");
+  return`${applCards}
+  <button class="btn-ghost-sm" onclick="addApplicant('${f.id}')" style="margin-top:4px">+ Add Applicant</button>`;
+}
+
+function rInfo(f){
+  return`<div class="sec">
+    <div class="sec-hdr"><span class="sec-title">Property & Deal Info</span></div>
+    <div class="sec-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div><label class="flabel">PROPERTY ADDRESS</label><input class="fi" value="${esc(f.address||"")}" placeholder="Address…" onchange="setField('${f.id}','address',this.value)" onblur="setField('${f.id}','address',this.value)"/></div>
+        <div>
+          <label class="flabel">OWNER / LANDLORD</label>
+          <input class="fi" value="${esc(f.owner||"")}" placeholder="Owner…" onchange="setField('${f.id}','owner',this.value)" onblur="setField('${f.id}','owner',this.value)"/>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">
+            ${["individual","llc","trust","corporation"].map(et=>{
+              const labels={individual:"Individual",llc:"LLC",trust:"Trust",corporation:"Corp"};
+              const active=(f.ownerEntity||"individual")===et;
+              return`<button onclick="setField('${f.id}','ownerEntity','${et}')" style="cursor:pointer;padding:2px 8px;font-size:9px;font-family:'Lato',sans-serif;font-weight:700;border-radius:20px;border:1px solid ${active?"#8a7a50":"#d0c8b8"};background:${active?"#3a3020":"transparent"};color:${active?"#f5f0e8":"#8a7a60"}">${labels[et]}</button>`;
+            }).join("")}
+          </div>
+          ${(f.ownerEntity&&f.ownerEntity!=="individual")?`<input class="fi" style="margin-top:4px;font-size:11px" value="${esc(f.ownerLegalName||"")}" placeholder="Full legal name (LLC / Trust / Corp)…" onchange="setField('${f.id}','ownerLegalName',this.value)" onblur="setField('${f.id}','ownerLegalName',this.value)"/>`:""}
+        </div>
+        <div><label class="flabel">MONTHLY RENT</label><input class="fi" value="${esc(f.rent||"")}" placeholder="$0,000/mo" onchange="setField('${f.id}','rent',this.value)" onblur="setField('${f.id}','rent',this.value)"/></div>
+        <div><label class="flabel">SECURITY DEPOSIT</label><input class="fi" value="${esc(f.deposit||"")}" placeholder="$0,000" onchange="setField('${f.id}','deposit',this.value)" onblur="setField('${f.id}','deposit',this.value)"/></div>
+        <div><label class="flabel">MOVE-IN DATE</label><input class="fi" type="date" value="${esc(f.moveInDate||"")}" onchange="setField('${f.id}','moveInDate',this.value)"/></div>
+        <div><label class="flabel">LEASE START</label><input class="fi" type="date" value="${esc(f.leaseStart||"")}" onchange="setField('${f.id}','leaseStart',this.value)"/></div>
+        <div><label class="flabel">LEASE END</label><input class="fi" type="date" value="${esc(f.leaseEnd||"")}" onchange="setField('${f.id}','leaseEnd',this.value)"/></div>
+        <div><label class="flabel">TC FEE</label><input class="fi" value="${esc(f.tcFee||"")}" placeholder="e.g. $450" onchange="setField('${f.id}','tcFee',this.value)" onblur="setField('${f.id}','tcFee',this.value)"/></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="flabel">GOOGLE DRIVE FOLDER</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input class="fi" value="${esc(f.driveFolder||"")}" placeholder="Paste Drive folder link…" onchange="setField('${f.id}','driveFolder',this.value)" onblur="setField('${f.id}','driveFolder',this.value)" style="flex:1"/>
+          ${f.driveFolder?`<a href="${esc(f.driveFolder)}" target="_blank" style="font-size:10px;color:#8a7a50;font-weight:700;white-space:nowrap;text-decoration:none;background:#f0ebe0;padding:6px 12px;border-radius:20px;border:1px solid #d0c8b8">↗ Open</a>`:""}
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;width:fit-content">
+          <input type="checkbox" ${f.bmFileOpen?"checked":""} onchange="setField('${f.id}','bmFileOpen',this.checked);rMain();" style="accent-color:#3a7a4a;width:14px;height:14px;cursor:pointer"/>
+          <span style="font-size:11px;font-weight:700;color:${f.bmFileOpen?"#2a6a3a":"#8a7a60"}">BM File Open</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-hdr"><span class="sec-title">Agent Information</span></div>
+    <div class="sec-body">
+      <div style="margin-bottom:14px">
+        <div style="font-size:10px;color:#b0a890;font-weight:700;letter-spacing:1px;margin-bottom:8px">OUR AGENT</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+          <div><label class="flabel">NAME</label>
+            <select class="fi" onchange="setAgentFromSelect('${f.id}','agent',this.value)">
+              <option value="">Select…</option>
+              <optgroup label="Team Agents">
+                ${["Nancy Gonzalez","Ethan Plemmons","Heather Savoy","Jason Chinchilla","Ki Contreras","Maya Worthy","Luke Simon","Jennifer Landon"].map(n=>`<option${f.agent===n?" selected":""}>${n}</option>`).join("")}
+              </optgroup>
+              <optgroup label="Independent"><option${f.agent==="Casi Kneebone"?" selected":""}>Casi Kneebone</option></optgroup>
+              <optgroup label="Referral">${["Artur Aleksanyan","Annie Mochrie"].map(n=>`<option${f.agent===n?" selected":""}>${n}</option>`).join("")}</optgroup>
+              <option value="__other__"${f.agent&&!AGENTS[f.agent]?" selected":""}>Other…</option>
+            </select>
+          </div>
+          <div><label class="flabel">DRE #</label><input class="fi" value="${esc(f.agentDRE||"")}" placeholder="DRE…" onchange="setField('${f.id}','agentDRE',this.value)" onblur="setField('${f.id}','agentDRE',this.value)"/></div>
+          <div><label class="flabel">EMAIL</label><input class="fi" value="${esc(f.agentEmail||"")}" placeholder="Email…" onchange="setField('${f.id}','agentEmail',this.value)" onblur="setField('${f.id}','agentEmail',this.value)"/></div>
+          <div><label class="flabel">PHONE</label><input class="fi" value="${esc(f.agentPhone||"")}" placeholder="Phone…" onchange="setField('${f.id}','agentPhone',this.value)" onblur="setField('${f.id}','agentPhone',this.value)"/></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#b0a890;font-weight:700;letter-spacing:1px;margin-bottom:8px">CO-AGENT / OPPOSING AGENT (if applicable)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:8px">
+          <div><label class="flabel">NAME</label><input class="fi" value="${esc(f.coAgent||"")}" placeholder="Co-agent name…" onchange="setField('${f.id}','coAgent',this.value)" onblur="setField('${f.id}','coAgent',this.value)"/></div>
+          <div><label class="flabel">DRE #</label><input class="fi" value="${esc(f.coAgentDRE||"")}" placeholder="DRE…" onchange="setField('${f.id}','coAgentDRE',this.value)" onblur="setField('${f.id}','coAgentDRE',this.value)"/></div>
+          <div><label class="flabel">EMAIL</label><input class="fi" value="${esc(f.coAgentEmail||"")}" placeholder="Email…" onchange="setField('${f.id}','coAgentEmail',this.value)" onblur="setField('${f.id}','coAgentEmail',this.value)"/></div>
+          <div><label class="flabel">BROKERAGE</label><input class="fi" value="${esc(f.coAgentBrokerage||"")}" placeholder="Brokerage…" onchange="setField('${f.id}','coAgentBrokerage',this.value)" onblur="setField('${f.id}','coAgentBrokerage',this.value)"/></div>
+          <div><label class="flabel">BROKERAGE DRE #</label><input class="fi" value="${esc(f.coAgentBrokerageDRE||"")}" placeholder="DRE…" onchange="setField('${f.id}','coAgentBrokerageDRE',this.value)" onblur="setField('${f.id}','coAgentBrokerageDRE',this.value)"/></div>
+          <div><label class="flabel">ASSISTANT NAME</label><input class="fi" value="${esc(f.coAgentAssistant||"")}" placeholder="Assistant name…" onchange="setField('${f.id}','coAgentAssistant',this.value)" onblur="setField('${f.id}','coAgentAssistant',this.value)"/></div>
+          <div><label class="flabel">ASSISTANT EMAIL</label><input class="fi" value="${esc(f.coAgentAssistantEmail||"")}" placeholder="Assistant email…" onchange="setField('${f.id}','coAgentAssistantEmail',this.value)" onblur="setField('${f.id}','coAgentAssistantEmail',this.value)"/></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-hdr"><span class="sec-title">General Notes</span></div>
+    <div class="sec-body">
+      <textarea class="fi" rows="4" placeholder="General notes…" onchange="setField('${f.id}','notes',this.value)" onblur="setField('${f.id}','notes',this.value)" style="resize:vertical">${esc(f.notes||"")}</textarea>
+    </div>
+  </div>`;
+}
+
+/* ── ACTIONS ── */
+function setActive(id){AID=id;VIEW="file";FTAB="checklist";render();save();}
+function goToDash(){VIEW="dash";render();save();}
+function swFTab(t){FTAB=t;rMain();bindOnclicks(document.getElementById("main"));}
+
+function openEmailModal(toEmail,subject,body){
+  const modal=document.createElement("div");
+  modal.style.cssText="position:fixed;inset:0;background:rgba(50,40,20,.5);display:flex;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(6px)";
+  modal.innerHTML=`<div style="background:#faf7f2;border:1px solid #e0d8c8;border-radius:16px;padding:24px;width:600px;max-width:95vw;max-height:90vh;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 40px rgba(0,0,0,.15)">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:#2a2010">Agent Update</span>
+      <button id="au-close" style="background:none;border:none;color:#a09880;font-size:20px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div><label style="font-size:9px;color:#8a7a60;font-weight:700;letter-spacing:1.5px;display:block;margin-bottom:3px">TO</label>
+        <input id="au-to" value="${toEmail}" placeholder="Agent email…" style="width:100%;background:#f5f0e8;border:1px solid #d8d0c0;border-radius:7px;padding:7px 10px;font-family:'Lato',sans-serif;font-size:12px;color:#3a3020"/></div>
+      <div><label style="font-size:9px;color:#8a7a60;font-weight:700;letter-spacing:1.5px;display:block;margin-bottom:3px">SUBJECT</label>
+        <input id="au-subject" value="${subject.replace(/"/g,'&quot;')}" style="width:100%;background:#f5f0e8;border:1px solid #d8d0c0;border-radius:7px;padding:7px 10px;font-family:'Lato',sans-serif;font-size:12px;color:#3a3020"/></div>
+      <div><label style="font-size:9px;color:#8a7a60;font-weight:700;letter-spacing:1.5px;display:block;margin-bottom:3px">MESSAGE — EDIT BEFORE SENDING</label>
+        <textarea id="au-body" style="width:100%;min-height:260px;background:#f5f0e8;border:1px solid #d8d0c0;border-radius:7px;padding:10px 12px;font-family:'Lato',sans-serif;font-size:11px;color:#3a3020;line-height:1.6;resize:vertical">${body.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button id="au-mailto" style="flex:1;background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:10px 20px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer">✉ Open in Email App</button>
+      <button id="au-copy" style="flex:1;background:transparent;color:#8a7a60;border:1px solid #d0c8b8;border-radius:20px;padding:10px 20px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer">📋 Copy to Clipboard</button>
+      <button id="au-close2" style="background:transparent;color:#a09880;border:1px solid #d0c8b8;border-radius:20px;padding:10px 16px;font-size:11px;font-family:'Lato',sans-serif;cursor:pointer">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  const close=()=>document.body.removeChild(modal);
+  modal.querySelector("#au-close").addEventListener("click",close);
+  modal.querySelector("#au-close2").addEventListener("click",close);
+  modal.addEventListener("click",e=>{if(e.target===modal)close();});
+  modal.querySelector("#au-mailto").addEventListener("click",()=>{
+    const to=encodeURIComponent(modal.querySelector("#au-to").value.trim());
+    const subj=encodeURIComponent(modal.querySelector("#au-subject").value);
+    const bd=encodeURIComponent(modal.querySelector("#au-body").value);
+    window.location.href=`mailto:${to}?subject=${subj}&body=${bd}`;
+  });
+  modal.querySelector("#au-copy").addEventListener("click",()=>{
+    const full=`To: ${modal.querySelector("#au-to").value}\nSubject: ${modal.querySelector("#au-subject").value}\n\n${modal.querySelector("#au-body").value}`;
+    const btn=modal.querySelector("#au-copy");
+    navigator.clipboard.writeText(full).then(()=>{
+      btn.textContent="✓ Copied!";btn.style.background="#e8f4e8";btn.style.borderColor="#90c898";btn.style.color="#2a6a3a";
+      setTimeout(()=>{btn.textContent="📋 Copy to Clipboard";btn.style.cssText="";},2000);
+    }).catch(()=>{modal.querySelector("#au-body").select();document.execCommand("copy");});
+  });
+}
+
+function sendAgentUpdate(fid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  const agInfo=AGENTS[f.agent]||{};
+  const agEmail=f.agentEmail||agInfo.email||"";
+  const agName=f.agent||"";
+  const addr=f.address||"(address)";
+  const firstName=agName?agName.split(" ")[0]:"";
+  const moveIn=f.moveInDate?fmtShort(f.moveInDate):"TBD";
+  const moveDays=f.moveInDate?daysUntil(f.moveInDate):null;
+  const moveLine=moveDays!==null?(moveDays<0?`${Math.abs(moveDays)} days past move-in`:moveDays===0?"Move-in TODAY":`${moveDays} days to move-in`):"";
+
+  // Applicant status summary
+  const approved=(f.applicants||[]).filter(a=>a.status==="approved");
+  const pending=(f.applicants||[]).filter(a=>a.status==="pending"&&a.name);
+  const denied=(f.applicants||[]).filter(a=>a.status==="denied"&&a.name);
+
+  // Pending checklist items
+  const pendingItems=[];
+  SECTIONS.forEach(s=>{
+    const items=[...s.items,...((f.customItems||{})[s.id]||[])];
+    items.forEach(i=>{
+      const c=(f.checks||{})[i.id]||{};
+      if(!c.done&&!c.na)pendingItems.push({label:i.label,section:s.title});
+    });
+  });
+  const doneCount=SECTIONS.reduce((acc,s)=>{
+    const items=[...s.items,...((f.customItems||{})[s.id]||[])];
+    return acc+items.filter(i=>{const c=(f.checks||{})[i.id]||{};return c.done;}).length;
+  },0);
+
+  const lines=[];
+  lines.push(firstName?`Hi ${firstName},`:"Hi,");
+  lines.push("");
+  lines.push(`Here's a rental file update for ${addr}:`);
+  if(f.owner)lines.push(`Owner/Landlord: ${f.owner}`);
+  if(f.rent)lines.push(`Monthly Rent: ${f.rent}/mo`);
+  if(f.deposit)lines.push(`Deposit: ${f.deposit}`);
+  if(moveIn!=="TBD")lines.push(`Move-In: ${moveIn}${moveLine?" — "+moveLine:""}`);
+  lines.push(`Progress: ${progFile(f)}% (${doneCount} items complete)`);
+
+  // Applicant status
+  if(approved.length||pending.length||denied.length){
+    lines.push("");
+    lines.push("APPLICANT STATUS");
+    lines.push("─────────────────────────────");
+    approved.forEach(a=>lines.push(`✓  ${a.name} — Approved${a.creditScore?" (Score: "+a.creditScore+")":""}`));
+    pending.forEach(a=>lines.push(`⟳  ${a.name} — Screening in progress`));
+    denied.forEach(a=>lines.push(`✗  ${a.name} — Denied`));
+  }
+
+  // Pending docs grouped by section
+  const bySection={};
+  pendingItems.forEach(i=>{if(!bySection[i.section])bySection[i.section]=[];bySection[i.section].push(i.label);});
+  if(Object.keys(bySection).length){
+    lines.push("");
+    lines.push("PENDING ITEMS");
+    lines.push("─────────────────────────────");
+    Object.entries(bySection).forEach(([sec,items])=>{
+      lines.push(`${sec}:`);
+      items.slice(0,4).forEach(l=>lines.push(`  →  ${l}`));
+      if(items.length>4)lines.push(`  →  …and ${items.length-4} more`);
+    });
+  }
+
+  lines.push("");
+  lines.push("[Add any notes here]");
+  lines.push("");
+  lines.push("Please let me know if you need anything.");
+  lines.push("");
+  lines.push("Best,");
+  lines.push(LRG.tcName||"Mia Hanada");
+  lines.push("TC | Landon Realty Group");
+  lines.push(LRG.tcEmail||"Mia@lrgla.com");
+
+  const subject=`Rental Update — ${addr}${moveIn!=="TBD"?" | Move-In "+moveIn:""}`;
+  openEmailModal(agEmail,subject,lines.join("\n"));
+}
+function setField(fid,k,v){const f=FILES.find(x=>x.id===fid);if(f){f[k]=v;rSidebar();save();}}
+function setAgentFromSelect(fid,field,val){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(val==="__other__"){f.agent="";f.agentDRE="";f.agentEmail="";f.agentPhone="";}
+  else if(AGENTS[val]){f.agent=val;f.agentDRE=AGENTS[val].dre;f.agentEmail=AGENTS[val].email;f.agentPhone=AGENTS[val].phone;}
+  else{f.agent=val;}
+  rMain();save();
+}
+function setCheck(fid,iid,val){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(!f.checks[iid])f.checks[iid]={};
+  f.checks[iid].done=val;f.checks[iid].date=val?new Date().toISOString().slice(0,10):"";
+  rMain();save();
+}
+function setNote(fid,iid,v){const f=FILES.find(x=>x.id===fid);if(!f)return;if(!f.checks[iid])f.checks[iid]={};f.checks[iid].note=v;save();}
+function setSigningStatus(fid,iid,key,val){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(!f.checks[iid])f.checks[iid]={};
+  f.checks[iid][key]=val;
+  // Auto-check the item as done when fully executed
+  if(key==="fe"&&val){f.checks[iid].done=true;f.checks[iid].date=new Date().toISOString().slice(0,10);}
+  rMain();save();
+}
+function setNA(fid,iid,val){const f=FILES.find(x=>x.id===fid);if(!f)return;if(!f.checks[iid])f.checks[iid]={};f.checks[iid].na=val;if(val)f.checks[iid].done=false;rMain();save();}
+function setRentalDone(fid,val){const f=FILES.find(x=>x.id===fid);if(f){f.rentalDone=val;rMain();save();}}
+function setDashNote(fid,v){const f=FILES.find(x=>x.id===fid);if(f){f.dashNote=v;save();}}
+function setApplField(fid,aid,k,v){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  const a=(f.applicants||[]).find(x=>x.id===aid);if(a){a[k]=v;rMain();save();}
+}
+function addApplicant(fid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(!f.applicants)f.applicants=[];
+  f.applicants.push(defApplicant(f.applicants.length+1));
+  rMain();save();
+}
+function rmApplicant(fid,aid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  f.applicants=(f.applicants||[]).filter(a=>a.id!==aid);
+  rMain();save();
+}
+function addCustomItem(fid,sid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  const el=document.getElementById("ci-"+sid+"-"+fid);
+  const label=(el?.value||"").trim();if(!label){el?.focus();return;}
+  if(!f.customItems)f.customItems={};if(!f.customItems[sid])f.customItems[sid]=[];
+  const id="ci_"+Date.now();
+  f.customItems[sid].push({id,label});f.checks[id]={done:false,na:false,date:"",note:""};
+  el.value="";rMain();save();
+}
+function rmCustomItem(fid,sid,iid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(f.customItems&&f.customItems[sid])f.customItems[sid]=f.customItems[sid].filter(i=>i.id!==iid);
+  rMain();save();
+}
+function rmFile(fid){
+  if(!confirm("Remove this rental file?"))return;
+  FILES=FILES.filter(f=>f.id!==fid);
+  if(AID===fid)AID=FILES[0]?.id||null;
+  VIEW="dash";render();save();
+}
+
+/* ── MODAL ── */
+function openModal(){document.getElementById("modal").style.display="flex";}
+function closeModal(){document.getElementById("modal").style.display="none";}
+function createFile(){
+  const addr=document.getElementById("m-address").value.trim();
+  if(!addr){document.getElementById("m-address").focus();return;}
+  const agentVal=document.getElementById("m-agent").value;
+  const f=nFile();
+  f.address=addr;
+  f.owner=document.getElementById("m-owner").value;
+  f.rent=document.getElementById("m-rent").value;
+  f.moveInDate=document.getElementById("m-movein").value;
+  if(agentVal&&agentVal!=="__other__"&&AGENTS[agentVal]){
+    f.agent=agentVal;f.agentDRE=AGENTS[agentVal].dre;f.agentEmail=AGENTS[agentVal].email;f.agentPhone=AGENTS[agentVal].phone;
+  }else{f.agent=agentVal;}
+  FILES.push(f);AID=f.id;VIEW="file";FTAB="checklist";
+  closeModal();render();save();
+}
+
+/* ── EXPORT / IMPORT ── */
+function exportData(){
+  try{
+    const data=JSON.stringify({files:FILES,activeId:AID,dashNotes:DASH_NOTES,exportedAt:new Date().toISOString()},null,2);
+    const blob=new Blob([data],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download="rental-backup-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    const el=document.getElementById("save-status");
+    el.textContent="✓ exported";el.style.color="#3a7a50";
+    setTimeout(()=>{el.textContent="● saved";el.style.color="#90a880";},2500);
+  }catch(e){alert("Export failed: "+e.message);}
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  if(!confirm("Import this backup? Current data will be replaced.\n\nFile: "+file.name)){input.value="";return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d.files||!Array.isArray(d.files)){alert("Invalid backup file.");input.value="";return;}
+      localStorage.setItem(SK,JSON.stringify({files:d.files,activeId:d.activeId||null,dashNotes:d.dashNotes||""}));
+      
+async function supaLoad(key) {
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/tracker_data?key=eq.${encodeURIComponent(key)}&select=value`, {
+      headers: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY }
+    });
+    const rows = await res.json();
+    if (rows && rows.length > 0) return rows[0].value;
+    return null;
+  } catch(e) { console.warn("Supabase load error:", e); return null; }
+}
+
+    }catch(err){alert("Could not read file: "+err.message);}
+    input.value="";
+  };
+  reader.readAsText(file);
+}
+
+/* ── CHROME file:// FIX ── */
+function bindOnclicks(root){
+  if(!root)return;
+  root.querySelectorAll('[onclick]').forEach(el=>{
+    const fn=el.getAttribute('onclick');if(!fn)return;
+    el.removeAttribute('onclick');
+    el.addEventListener('click',function(e){try{(new Function('event',fn)).call(this,e);}catch(err){console.error(err);}});
+  });
+}
+const _oR=render,_oM=rMain,_oS=rSidebar,_oD=rDashboard;
+render=window.render=function(){_oR();bindOnclicks(document.getElementById('main'));bindOnclicks(document.getElementById('sidebar'));};
+rMain=window.rMain=function(){_oM();bindOnclicks(document.getElementById('main'));};
+rSidebar=window.rSidebar=function(){_oS();bindOnclicks(document.getElementById('sidebar'));};
+rDashboard=window.rDashboard=function(){_oD();bindOnclicks(document.getElementById('main'));};
+
+document.addEventListener("click",function(e){
+  if(e.target.tagName==="INPUT"&&e.target.type==="checkbox"){
+    const rc=e.target.closest("[data-rented-id]");
+    if(rc){e.stopPropagation();setRentalDone(rc.dataset.rentedId,e.target.checked);return;}
+  }
+  const isInteractive=e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"||e.target.tagName==="SELECT"||e.target.tagName==="A";
+  if(isInteractive)return;
+  const opener=e.target.closest("[data-open-file]");
+  if(opener&&!e.target.closest("[data-dash-note]")){
+    setActive(opener.dataset.openFile);return;
+  }
+}););
+
+
+async function supaLoad(key) {
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/tracker_data?key=eq.${encodeURIComponent(key)}&select=value`, {
+      headers: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY }
+    });
+    const rows = await res.json();
+    if (rows && rows.length > 0) return rows[0].value;
+    return null;
+  } catch(e) { console.warn("Supabase load error:", e); return null; }
+}
+
+    });
+    const d=await r.json();
+    return d&&d[0]?d[0].value:null;
+  }catch(e){console.warn("Supabase get error",e);return null;}
+}
+
+}
+
+
+/* ── SUPABASE SYNC ── */
+const SB_URL="https://wkccbbphiphythamnjhg.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrY2NiYnBoaXBoeXRoYW1uamhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNDIxNzEsImV4cCI6MjA5MjYxODE3MX0.f39wgVZidzhS_ZjRGGeUlgB0lp0RRbAy-Lrf3lY7imk";
+const SB_SK="rental_tracker_v1";
+
+async function sbGet(k){
+  try{
+    const r=await fetch(SB_URL+"/rest/v1/tracker_data?key=eq."+encodeURIComponent(k)+"&select=value",{
+      headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY}
+    });
+    const d=await r.json();
+    return(d&&d[0])?d[0].value:null;
+  }catch(e){return null;}
+}
+async function sbSet(k,v){
+  try{
+    await fetch(SB_URL+"/rest/v1/tracker_data",{
+      method:"POST",
+      headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"resolution=merge-duplicates"},
+      body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})
+    });
+  }catch(e){}
+}
+
+/* patch save to push to Supabase */
+const _origSave=save;
+save=function(){
+  _origSave();
+  const d=localStorage.getItem(SB_SK);
+  if(d)sbSet(SB_SK,d);
+};
+
+/* load from Supabase on startup */
+(async function(){
+  try{
+    const remote=await sbGet(SB_SK);
+    if(remote)localStorage.setItem(SB_SK,remote);
+  }catch(e){}
+  load();render();
+})();
+</script>
+</body>
+</html>

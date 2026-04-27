@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Pre-Listing Tracker — LRG</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:#f5f0e8;color:#3a3020;font-family:'Lato','Helvetica Neue',sans-serif;font-size:13px}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#f0ebe0}::-webkit-scrollbar-thumb{background:#d0c8b8;border-radius:2px}
+input,textarea,select{outline:none;font-family:inherit}
+input::placeholder,textarea::placeholder{color:#c0b8a8}
+#app{display:flex;flex-direction:column;height:100vh}
+/* TOPBAR */
+#topbar{background:#faf7f2;border-bottom:1px solid #e0d8c8;padding:10px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px;flex-wrap:wrap}
+.brand{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;letter-spacing:.5px;color:#2a2010}
+.brand-sub{font-size:9px;color:#b0a890;letter-spacing:2.5px;font-weight:700;margin-left:10px}
+.top-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#save-status{font-size:10px;letter-spacing:1px;color:#90a880}
+.btn-primary{background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:6px 16px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer;letter-spacing:.5px}
+.btn-primary:hover{opacity:.82}
+.btn-ghost-sm{background:transparent;border:1px solid #d0c8b8;border-radius:20px;padding:5px 13px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer;color:#8a7a60;letter-spacing:.4px}
+.btn-ghost-sm:hover{background:#ede8de}
+/* LAYOUT */
+#body{display:flex;flex:1;overflow:hidden}
+#sidebar{width:200px;background:#f0ebe0;border-right:1px solid #e0d8c8;overflow-y:auto;flex-shrink:0}
+#main-scroll{flex:1;overflow-y:auto}
+#main{padding:20px 26px 60px}
+/* SIDEBAR */
+.tx-tab{padding:12px 14px;border-bottom:1px solid #e0d8c8;cursor:pointer;transition:background .14s;border-left:3px solid transparent}
+.tx-tab:hover{background:#ede8de}
+.tx-tab.active{background:#faf7f2;border-left-color:#8a7a50}
+.t-addr{font-size:11px;color:#7a7060;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.t-client{font-size:10px;color:#a09880;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb-out{background:#e0d8c8;border-radius:6px;height:4px;margin-top:6px}
+.pb-in{height:4px;border-radius:6px;background:linear-gradient(90deg,#8a7a50,#b0a060);transition:width .4s}
+.t-pct{font-size:9px;color:#b0a890;margin-top:2px}
+/* SHARED */
+.fi{background:#faf7f2;border:1px solid #d8d0c0;border-radius:7px;color:#3a3020;padding:7px 10px;font-family:'Lato',sans-serif;font-size:12px;transition:border-color .18s;width:100%}
+.fi:focus{border-color:#a09060}
+.fi-sm{background:#f5f0e8;border:1px solid #d8d0c0;border-radius:6px;color:#3a3020;padding:5px 8px;font-family:'Lato',sans-serif;font-size:11px}
+.flabel{font-size:9px;color:#8a7a60;font-weight:700;letter-spacing:1.5px;display:block;margin-bottom:4px}
+.sec{background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;margin-bottom:16px;overflow:hidden}
+.sec-hdr{padding:11px 18px;border-bottom:1px solid #ece4d8;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:600;font-style:italic;color:#4a4030}
+.sec-body{padding:14px 18px}
+/* CHECKLIST ITEMS */
+.cl-item{display:flex;align-items:flex-start;gap:10px;padding:9px 16px;border-bottom:1px solid #f0ebe0;transition:background .12s}
+.cl-item:last-child{border-bottom:none}
+.cl-item:hover{background:#f8f5f0}
+.cl-item.done-item{background:#f5faf5}
+.cl-item.na-item{background:#faf8f5;opacity:.65}
+.cl-cb{width:15px;height:15px;accent-color:#8a7a50;cursor:pointer;flex-shrink:0;margin-top:1px}
+.cl-label{font-size:12px;color:#3a3020;cursor:pointer;flex:1;line-height:1.4}
+.cl-label.checked{color:#8a9a80;text-decoration:line-through}
+.cl-label.na{color:#b0a890;text-decoration:line-through}
+.cl-note{font-size:10px;background:transparent;border:none;border-bottom:1px solid #ece4d8;width:100%;font-family:'Lato',sans-serif;color:#7a6a50;padding:2px 0;margin-top:3px}
+.cl-note:focus{outline:none;border-bottom-color:#a09060}
+.cl-date{font-size:10px;background:#f5f0e8;border:1px solid #e0d8c8;border-radius:5px;color:#5a5040;padding:2px 6px;font-family:'Lato',sans-serif;cursor:pointer;margin-left:4px}
+.na-toggle{font-size:9px;color:#c0b8a8;font-weight:700;cursor:pointer;padding:2px 7px;border:1px solid #e0d8c8;border-radius:10px;white-space:nowrap;background:transparent;flex-shrink:0}
+.na-toggle.active{color:#b08040;border-color:#d4c080;background:#fff8e8}
+.add-item-bar{display:flex;gap:8px;align-items:center;padding:10px 16px;border-top:1px solid #ece4d8;background:#f8f4ee;flex-wrap:wrap}
+/* PROGRESS */
+.prog-wrap{background:#faf7f2;border:1px solid #e0d8c8;border-radius:10px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.prog-bar-out{flex:1;min-width:80px;background:#e8e0d0;border-radius:6px;height:6px}
+.prog-bar-in{height:6px;border-radius:6px;background:linear-gradient(90deg,#8a7a50,#b0a060);transition:width .5s}
+/* HEADER CARD */
+.hdr-card{background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;padding:16px 18px;margin-bottom:16px}
+/* DASHBOARD */
+.dash-card{background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;padding:16px 20px;margin-bottom:14px;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.dash-card:hover{box-shadow:0 2px 12px rgba(58,48,32,.08);border-color:#c8b870}
+.dash-card.done-card{background:#f5faf5;border-color:#b8d8b8;opacity:.85}
+.dash-prog{background:#e8e0d0;border-radius:6px;height:5px;margin-top:8px}
+.dash-prog-fill{height:5px;border-radius:6px;background:linear-gradient(90deg,#8a7a50,#b0a060);transition:width .4s}
+/* OVERLAY / MODAL */
+.overlay{position:fixed;inset:0;background:rgba(50,40,20,.42);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(5px)}
+.modal{background:#faf7f2;border:1px solid #e0d8c8;border-radius:16px;padding:26px;width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.13)}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#2a2010;margin-bottom:2px}
+.modal-sub{font-size:9px;color:#b0a890;letter-spacing:2px;font-weight:700;margin-bottom:16px}
+.field-wrap{margin-bottom:11px}
+.field-wrap label{display:block;font-size:9px;color:#8a7a60;letter-spacing:1.5px;font-weight:700;margin-bottom:4px}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+.btn-create{flex:1;background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:10px;font-size:11px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer}
+.btn-cancel{flex:1;background:transparent;color:#8a7a60;border:1px solid #d0c8b8;border-radius:20px;padding:10px;font-size:11px;font-family:'Lato',sans-serif;cursor:pointer}
+.empty-dash{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;color:#c0b8a8;gap:12px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div>
+        <span class="brand">Pre-Listing</span>
+        <span class="brand-sub">LANDON REALTY GROUP</span>
+      </div>
+      <button id="dash-btn" class="btn-ghost-sm" onclick="goToDash()">⌂ Dashboard</button>
+    </div>
+    <div class="top-right">
+      <span id="save-status">● saved</span>
+      <span id="file-count"></span>
+      <button class="btn-ghost-sm" onclick="exportData()" title="Download backup">⬇ Export</button>
+      <label class="btn-ghost-sm" title="Restore from backup">⬆ Import<input type="file" accept=".json" onchange="importData(this)" style="display:none"/></label>
+      <button class="btn-primary" onclick="openModal()">+ New Listing</button>
+    </div>
+  </div>
+  <div id="body">
+    <div id="sidebar"></div>
+    <div id="main-scroll"><div id="main"></div></div>
+  </div>
+</div>
+
+<div id="modal" class="overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2>New Listing File</h2>
+    <p class="modal-sub">FILL IN WHAT YOU KNOW — EDIT ANYTIME</p>
+    <div class="field-wrap"><label>PROPERTY ADDRESS</label><input class="fi" id="m-address" placeholder="123 Main St, Burbank CA…"/></div>
+    <div class="field-wrap"><label>SELLER NAME(S)</label><input class="fi" id="m-seller" placeholder="Seller name(s)…"/></div>
+    <div class="field-wrap"><label>OUR AGENT</label>
+      <select class="fi" id="m-agent">
+        <option value="">Select agent…</option>
+        <optgroup label="Team Agents">
+          <option>Nancy Gonzalez</option><option>Ethan Plemmons</option><option>Heather Savoy</option>
+          <option>Jason Chinchilla</option><option>Ki Contreras</option><option>Maya Worthy</option>
+          <option>Luke Simon</option><option>Jennifer Landon</option>
+        </optgroup>
+        <optgroup label="Independent"><option>Casi Kneebone</option></optgroup>
+        <optgroup label="Referral"><option>Artur Aleksanyan</option><option>Annie Mochrie</option></optgroup>
+      </select>
+    </div>
+    <div class="field-wrap"><label>LIST PRICE</label><input class="fi" id="m-price" placeholder="$000,000"/></div>
+    <div class="field-wrap"><label>TARGET LIST DATE</label><input class="fi" type="date" id="m-listdate"/></div>
+    <div class="modal-btns">
+      <button class="btn-create" onclick="createListing()">Create File</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SK="prelisting_v1";
+let FILES=[],AID=null,VIEW="dash",DASH_NOTES="",STIMER=null;
+
+/* ── CHECKLIST TEMPLATE ── */
+const SECTIONS=[
+  {id:"disclosures", title:"Seller Disclosures", color:"#d4a96a", items:[
+    {id:"tds",       label:"TDS — Transfer Disclosure Statement"},
+    {id:"spq",       label:"SPQ — Seller Property Questionnaire"},
+    {id:"nhd",       label:"NHD — Natural Hazard Disclosure"},
+    {id:"avid",      label:"AVID — Agent Visual Inspection Disclosure"},
+    {id:"adm",       label:"ADM — Agent Disclosure Memo"},
+    {id:"smoke",     label:"Smoke / CO Detector Compliance"},
+    {id:"water",     label:"Water Heater Strapping Compliance"},
+    {id:"lead",      label:"Lead Paint Disclosure (pre-1978 homes)"},
+    {id:"disc_gdrive",label:"Disclosures uploaded to Google Drive"},
+  ]},
+  {id:"title", title:"Prelim / Title", color:"#9ab8d0", items:[
+    {id:"prelim_ordered", label:"Preliminary Title Report — ordered"},
+    {id:"prelim_received",label:"Preliminary Title Report — received & reviewed"},
+    {id:"prelim_gdrive",  label:"Prelim uploaded to Google Drive"},
+    {id:"hoa_docs",       label:"HOA Documents requested (if applicable)"},
+    {id:"hoa_received",   label:"HOA Documents received"},
+  ]},
+  {id:"tc_admin", title:"TC Admin", color:"#b0a0d8", items:[
+    {id:"tc_fee_invoice", label:"TC Fee Invoice — completed & sent"},
+    {id:"listing_agmt",   label:"Listing Agreement — signed & uploaded"},
+    {id:"brbc",           label:"BRBC — signed (if applicable)"},
+    {id:"escrow_opened",  label:"Escrow opened"},
+    {id:"escrow_gdrive",  label:"Escrow info uploaded to Google Drive"},
+    {id:"transaction_file",label:"Transaction file created in system"},
+  ]},
+  {id:"marketing", title:"Photography & Marketing", color:"#a8c4a0", items:[
+    {id:"photo_scheduled",label:"Photography — scheduled"},
+    {id:"photo_done",     label:"Photography — completed & delivered"},
+    {id:"photos_gdrive",  label:"Photos uploaded to Google Drive"},
+    {id:"floor_plan",     label:"Floor plan / measurements (if applicable)"},
+    {id:"staging",        label:"Staging — scheduled / confirmed"},
+    {id:"video",          label:"Video / 3D tour (if applicable)"},
+  ]},
+  {id:"mls", title:"MLS / Listing Setup", color:"#e8a890", items:[
+    {id:"mls_input",      label:"MLS — listing input form completed"},
+    {id:"mls_active",     label:"MLS — listing active & verified"},
+    {id:"syndication",    label:"Syndication verified (Zillow, Redfin, etc.)"},
+    {id:"showing_setup",  label:"Showing instructions set up"},
+    {id:"lockbox",        label:"Lockbox installed"},
+    {id:"sign",           label:"For Sale sign installed"},
+    {id:"disclosure_pkg", label:"Disclosure package sent to agent"},
+  ]},
+  {id:"other", title:"Other / Custom", color:"#c8b8d0", items:[]}
+];
+
+/* ── FACTORY ── */
+function defChecks(){
+  const c={};
+  SECTIONS.forEach(s=>s.items.forEach(i=>{c[i.id]={done:false,na:false,date:"",note:""}}));
+  return c;
+}
+function nFile(){
+  return{
+    id:"pl_"+Date.now(),
+    address:"",seller:"",agent:"",listPrice:"",listDate:"",notes:"",
+    checks:defChecks(),
+    customItems:{},  // {sectionId:[{id,label}]}
+    listingDone:false,
+    createdAt:new Date().toISOString()
+  };
+}
+
+/* ── STORAGE ── */
+function save(){
+  clearTimeout(STIMER);
+  const el=document.getElementById("save-status");
+  el.textContent="saving…";el.style.color="#a09060";
+  STIMER=setTimeout(()=>{
+    try{localStorage.setItem(SK,JSON.stringify({files:FILES,activeId:AID,dashNotes:DASH_NOTES}));el.textContent="● saved";el.style.color="#90a880";}
+    catch(e){el.textContent="● error";}
+  },400);
+}
+function load(){
+  try{
+    const r=localStorage.getItem(SK);
+    if(r){
+      const d=JSON.parse(r);
+      FILES=(d.files||[]).map(f=>({...nFile(),...f,checks:{...defChecks(),...(f.checks||{})},customItems:f.customItems||{}}));
+      AID=d.activeId||null;
+      DASH_NOTES=d.dashNotes||"";
+    }
+  }catch(e){}
+  if(!FILES.length){const f=nFile();FILES.push(f);AID=f.id;}
+  if(!AID||!FILES.find(f=>f.id===AID))AID=FILES[0]?.id||null;
+}
+
+/* ── PROGRESS ── */
+function progFile(f){
+  let done=0,total=0;
+  SECTIONS.forEach(s=>{
+    const items=[...s.items,...((f.customItems||{})[s.id]||[])];
+    items.forEach(i=>{
+      const c=(f.checks||{})[i.id]||{};
+      if(!c.na){total++;if(c.done)done++;}
+    });
+  });
+  return total?Math.round(done/total*100):0;
+}
+
+/* ── RENDER ── */
+function render(){
+  document.getElementById("file-count").textContent=FILES.length+" listing"+(FILES.length!==1?"s":"");
+  const db=document.getElementById("dash-btn");
+  if(db){db.style.background=VIEW==="dash"?"#3a3020":"transparent";db.style.color=VIEW==="dash"?"#f5f0e8":"#8a7a60";db.style.borderColor=VIEW==="dash"?"#3a3020":"#d0c8b8";}
+  rSidebar();
+  if(VIEW==="dash")rDashboard();
+  else rMain();
+}
+
+function rSidebar(){
+  document.getElementById("sidebar").innerHTML=FILES.map(f=>{
+    const p=progFile(f),ac=f.id===AID;
+    return`<div class="tx-tab${ac?" active":""}" onclick="setActive('${f.id}')">
+      ${f.listingDone?'<span style="font-size:8px;background:#e8f4e8;color:#2a6a3a;border-radius:3px;padding:1px 5px;font-weight:700;margin-bottom:3px;display:inline-block">✓ LISTED</span>':''}
+      <div class="t-addr">${esc(f.address||"New Listing")}</div>
+      <div class="t-client">${esc(f.seller||"—")}${f.agent?" · "+esc(f.agent):""}</div>
+      <div class="pb-out"><div class="pb-in" style="width:${p}%"></div></div>
+      <div class="t-pct">${p}% complete</div>
+    </div>`;
+  }).join("");
+}
+
+function rDashboard(){
+  const main=document.getElementById("main");
+  const sorted=[...FILES].sort((a,b)=>{
+    if(a.listingDone&&!b.listingDone)return 1;
+    if(!a.listingDone&&b.listingDone)return-1;
+    const ad=a.listDate?new Date(a.listDate+"T00:00:00"):new Date("9999-01-01");
+    const bd=b.listDate?new Date(b.listDate+"T00:00:00"):new Date("9999-01-01");
+    return ad-bd;
+  });
+  const active=FILES.filter(f=>!f.listingDone);
+  const cards=sorted.map(f=>{
+    const p=progFile(f);
+    const listDays=f.listDate?daysUntil(f.listDate):null;
+    const cdColor=listDays===null?"#a09880":listDays<0?"#8a3a3a":listDays<=3?"#7a5a00":"#3a6644";
+    const cdText=listDays===null?"":listDays<0?Math.abs(listDays)+"d past list":listDays===0?"List TODAY":listDays+"d to list";
+    // Find incomplete urgent items — anything not done, not na
+    const urgent=[];
+    SECTIONS.forEach(s=>{
+      const items=[...s.items,...((f.customItems||{})[s.id]||[])];
+      items.forEach(i=>{
+        const c=(f.checks||{})[i.id]||{};
+        if(!c.done&&!c.na)urgent.push(i.label);
+      });
+    });
+    const pendingCount=urgent.length;
+    return`<div class="dash-card${f.listingDone?" done-card":""}" data-open-file="${f.id}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;cursor:pointer" data-open-file="${f.id}">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:3px">
+            ${f.agent?`<span style="font-size:9px;color:#a09880;font-weight:700">${esc(f.agent)}</span>`:""}
+            ${f.listingDone?`<span style="font-size:9px;background:#e8f4e8;color:#2a6a3a;border-radius:3px;padding:1px 7px;font-weight:700">✓ LISTED</span>`:""}
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:${f.listingDone?"#4a7a5a":"#2a2010"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(f.address||"Untitled Listing")}</div>
+          <div style="font-size:11px;color:#8a7a60;margin-top:2px">${esc(f.seller||"—")}${f.listPrice?` · <span style="font-weight:700;color:#3a3020">${esc(f.listPrice)}</span>`:""}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          ${cdText?`<div style="font-size:11px;font-weight:700;color:${cdColor}">${cdText}</div>`:""}
+          ${f.listDate?`<div style="font-size:9px;color:#b0a890;margin-top:1px">List ${fmtShort(f.listDate)}</div>`:""}
+          <div style="font-size:10px;font-weight:700;color:#8a7a50;margin-top:5px">${p}%</div>
+        </div>
+      </div>
+      <div class="dash-prog"><div class="dash-prog-fill" style="width:${p}%"></div></div>
+      ${!f.listingDone&&pendingCount>0?`<div style="margin-top:8px;font-size:10px;color:#a09880">${pendingCount} item${pendingCount!==1?"s":""} remaining</div>`:""}
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:${f.listingDone?"#e8f4e8":"#f5f0e8"};border:1px solid ${f.listingDone?"#90c898":"#d0c8b8"};border-radius:20px;padding:4px 12px;flex-shrink:0">
+          <input type="checkbox" ${f.listingDone?"checked":""} data-listed-id="${f.id}" style="accent-color:#3a7a4a;width:13px;height:13px;cursor:pointer"/>
+          <span style="font-size:10px;font-weight:700;color:${f.listingDone?"#2a6a3a":"#8a7a60"};white-space:nowrap">${f.listingDone?"✓ Listed":"Mark Listed"}</span>
+        </label>
+        <button data-open-file="${f.id}" style="margin-left:auto;background:#3a3020;color:#f5f0e8;border:none;border-radius:20px;padding:4px 14px;font-size:10px;font-family:'Lato',sans-serif;font-weight:700;cursor:pointer">Open →</button>
+      </div>
+      <div style="margin-top:10px;border-top:1px solid #ece4d8;padding-top:10px">
+        <textarea data-dash-note="${f.id}" placeholder="Notes…" onchange="setDashNote('${f.id}',this.value)" onblur="setDashNote('${f.id}',this.value)"
+          style="width:100%;background:${f.dashNote?"#fffdf5":"#f8f5f0"};border:1px solid ${f.dashNote?"#d4c080":"#ece4d8"};border-radius:7px;padding:8px 11px;font-family:'Lato',sans-serif;font-size:11px;color:#3a3020;resize:none;line-height:1.5;min-height:34px"
+          rows="2"
+        >${esc(f.dashNote||"")}</textarea>
+      </div>
+    </div>`;
+  }).join("");
+
+  main.innerHTML=`
+    <div style="padding:0 0 4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#2a2010">Pre-Listing Dashboard</div>
+          <div style="font-size:10px;color:#b0a890;letter-spacing:1.5px;font-weight:700;margin-top:1px">${new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}).toUpperCase()}</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <div style="background:#faf7f2;border:1px solid #e0d8c8;border-radius:10px;padding:10px 16px;text-align:center;min-width:70px">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#2a2010">${active.length}</div>
+            <div style="font-size:9px;color:#b0a890;font-weight:700;letter-spacing:1px">ACTIVE</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#faf7f2;border:1px solid #e0d8c8;border-radius:12px;overflow:hidden;margin-bottom:20px">
+        <div style="padding:10px 16px;border-bottom:1px solid #ece4d8;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:600;font-style:italic;color:#4a4030">Quick Notes</span>
+        </div>
+        <textarea id="dash-notes-ta" placeholder="Reminders, follow-ups, things to chase…" onchange="DASH_NOTES=this.value;save();" onblur="DASH_NOTES=this.value;save();"
+          style="width:100%;min-height:80px;background:transparent;border:none;padding:12px 16px;font-family:'Lato',sans-serif;font-size:12px;color:#3a3020;resize:vertical;line-height:1.6"
+        >${esc(DASH_NOTES)}</textarea>
+      </div>
+      <div style="font-size:9px;color:#b0a890;font-weight:700;letter-spacing:2px;margin-bottom:10px">LISTINGS — SORTED BY LIST DATE</div>
+      ${!FILES.length?`<div class="empty-dash"><span style="font-size:28px">??</span><span style="font-style:italic;font-size:13px">No listing files yet</span><button class="btn-primary" onclick="openModal()">+ Create First Listing</button></div>`:""}
+      ${cards}
+    </div>`;
+}
+
+function rMain(){
+  const main=document.getElementById("main");
+  if(VIEW==="dash"){rDashboard();return;}
+  const f=FILES.find(x=>x.id===AID);
+  if(!f){rDashboard();return;}
+  const p=progFile(f);
+  const allSections=SECTIONS.map(s=>{
+    const items=[...s.items,...((f.customItems||{})[s.id]||[]).map(i=>({...i,custom:true}))];
+    const secDone=items.filter(i=>{const c=(f.checks||{})[i.id]||{};return c.done;}).length;
+    const secNa=items.filter(i=>{const c=(f.checks||{})[i.id]||{};return c.na;}).length;
+    const secTotal=items.length;
+    const rows=items.map(i=>{
+      const c=(f.checks||{})[i.id]||{};
+      return`<div class="cl-item${c.done?" done-item":""}${c.na?" na-item":""}">
+        <input type="checkbox" class="cl-cb" ${c.done?"checked":""} ${c.na?"disabled":""} onchange="setCheck('${f.id}','${i.id}',this.checked)" style="${c.na?"opacity:.4":""}"/>
+        <div style="flex:1;min-width:0">
+          <label class="cl-label${c.done?" checked":""}${c.na?" na":""}">${esc(i.label)}${i.custom?` <span style="font-size:8px;background:#ede8de;color:#8a7a60;border-radius:3px;padding:1px 4px;font-weight:700">custom</span>`:""}</label>
+          ${c.done&&c.date?`<div style="font-size:9px;color:#3a6644;font-weight:700;margin-top:2px">✓ ${fmtShort(c.date)}</div>`:""}
+          <input type="text" class="cl-note" value="${esc(c.note||"")}" placeholder="Notes…" onchange="setNote('${f.id}','${i.id}',this.value)" onblur="setNote('${f.id}','${i.id}',this.value)"/>
+        </div>
+        <button class="na-toggle${c.na?" active":""}" onclick="setNA('${f.id}','${i.id}',${!c.na})">${c.na?"N/A ✓":"N/A"}</button>
+        ${i.custom?`<button style="background:none;border:none;color:#c0a898;cursor:pointer;font-size:12px;padding:0 2px" onclick="rmCustomItem('${f.id}','${s.id}','${i.id}')">×</button>`:""}
+      </div>`;
+    }).join("");
+    const pct=secTotal>0?Math.round(secDone/(secTotal-secNa||1)*100):0;
+    return`<div class="sec" style="border-left:3px solid ${s.color}">
+      <div class="sec-hdr" style="background:linear-gradient(90deg,${s.color}18,transparent)">
+        <span class="sec-title">${s.title}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:10px;color:#8a7a50;font-weight:700">${secDone}/${secTotal-secNa} done${secNa?" · "+secNa+" N/A":""}</span>
+          <div style="background:#e8e0d0;border-radius:4px;height:4px;width:60px"><div style="height:4px;border-radius:4px;background:${s.color};width:${pct}%"></div></div>
+        </div>
+      </div>
+      <div>${rows}</div>
+      <div class="add-item-bar">
+        <span style="font-size:10px;color:#8a7a60;font-weight:700;white-space:nowrap">+ ADD</span>
+        <input class="fi-sm" id="ci-${s.id}-${f.id}" placeholder="Custom item…" style="flex:1;min-width:100px" onkeydown="if(event.key==='Enter')addCustomItem('${f.id}','${s.id}')"/>
+        <button class="btn-ghost-sm" style="font-size:10px;padding:4px 12px" onclick="addCustomItem('${f.id}','${s.id}')">Add</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  main.innerHTML=`
+    <div class="hdr-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <input class="fi" style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;background:transparent;border:none;border-bottom:1px solid #e0d8c8;border-radius:0;padding:2px 0;margin-bottom:8px" value="${esc(f.address||"")}" placeholder="Property address…" onchange="setField('${f.id}','address',this.value)" onblur="setField('${f.id}','address',this.value)"/>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div style="flex:1 1 160px"><label class="flabel">SELLER</label><input class="fi" value="${esc(f.seller||"")}" placeholder="Seller name(s)…" onchange="setField('${f.id}','seller',this.value)" onblur="setField('${f.id}','seller',this.value)"/></div>
+            <div style="flex:1 1 160px"><label class="flabel">AGENT</label><input class="fi" value="${esc(f.agent||"")}" placeholder="Agent…" onchange="setField('${f.id}','agent',this.value)" onblur="setField('${f.id}','agent',this.value)"/></div>
+            <div style="flex:0 0 130px"><label class="flabel">LIST PRICE</label><input class="fi" value="${esc(f.listPrice||"")}" placeholder="$000,000" onchange="setField('${f.id}','listPrice',this.value)" onblur="setField('${f.id}','listPrice',this.value)"/></div>
+            <div style="flex:0 0 140px"><label class="flabel">TARGET LIST DATE</label><input class="fi" type="date" value="${esc(f.listDate||"")}" onchange="setField('${f.id}','listDate',this.value)"/></div>
+          </div>
+        </div>
+        <button class="btn-ghost-sm" style="color:#a07070;border-color:#d0b8b8" onclick="rmFile('${f.id}')">✕ Close</button>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-bar-out"><div class="prog-bar-in" style="width:${p}%"></div></div>
+      <span style="font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:#2a2010">${p}%</span>
+      <span style="font-size:10px;color:#8a7a60">pre-listing complete</span>
+      <label style="display:flex;align-items:center;gap:7px;cursor:pointer;margin-left:auto;background:${f.listingDone?"#e8f4e8":"#f5f0e8"};border:1px solid ${f.listingDone?"#90c898":"#d0c8b8"};border-radius:20px;padding:5px 14px">
+        <input type="checkbox" ${f.listingDone?"checked":""} onchange="setListingDone('${f.id}',this.checked)" style="accent-color:#3a7a4a;width:13px;height:13px;cursor:pointer"/>
+        <span style="font-size:10px;font-weight:700;color:${f.listingDone?"#2a6a3a":"#8a7a60"}">${f.listingDone?"✓ Listing is Live":"Mark Listing Live"}</span>
+      </label>
+    </div>
+    ${allSections}
+    <div class="sec">
+      <div class="sec-hdr"><span class="sec-title">General Notes</span></div>
+      <div class="sec-body">
+        <textarea class="fi" rows="4" placeholder="General notes about this listing…" onchange="setField('${f.id}','notes',this.value)" onblur="setField('${f.id}','notes',this.value)" style="resize:vertical">${esc(f.notes||"")}</textarea>
+      </div>
+    </div>`;
+}
+
+/* ── UTILS ── */
+function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+function fmtShort(d){if(!d)return"";return new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"});}
+function daysUntil(d){if(!d)return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((new Date(d+"T00:00:00")-t)/86400000);}
+
+/* ── ACTIONS ── */
+function setActive(id){AID=id;VIEW="file";render();save();}
+function goToDash(){VIEW="dash";render();save();}
+function setField(fid,k,v){const f=FILES.find(x=>x.id===fid);if(f){f[k]=v;rSidebar();save();}}
+function setCheck(fid,iid,val){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(!f.checks[iid])f.checks[iid]={};
+  f.checks[iid].done=val;
+  f.checks[iid].date=val?new Date().toISOString().slice(0,10):"";
+  rMain();save();
+}
+function setNote(fid,iid,v){const f=FILES.find(x=>x.id===fid);if(!f)return;if(!f.checks[iid])f.checks[iid]={};f.checks[iid].note=v;save();}
+function setNA(fid,iid,val){const f=FILES.find(x=>x.id===fid);if(!f)return;if(!f.checks[iid])f.checks[iid]={};f.checks[iid].na=val;if(val)f.checks[iid].done=false;rMain();save();}
+function setListingDone(fid,val){const f=FILES.find(x=>x.id===fid);if(f){f.listingDone=val;rMain();save();}}
+function setDashNote(fid,v){const f=FILES.find(x=>x.id===fid);if(f){f.dashNote=v;save();}}
+function addCustomItem(fid,sid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  const el=document.getElementById("ci-"+sid+"-"+fid);
+  const label=(el?.value||"").trim();if(!label){el?.focus();return;}
+  if(!f.customItems)f.customItems={};
+  if(!f.customItems[sid])f.customItems[sid]=[];
+  const id="ci_"+Date.now();
+  f.customItems[sid].push({id,label});
+  f.checks[id]={done:false,na:false,date:"",note:""};
+  el.value="";
+  rMain();save();
+}
+function rmCustomItem(fid,sid,iid){
+  const f=FILES.find(x=>x.id===fid);if(!f)return;
+  if(f.customItems&&f.customItems[sid])f.customItems[sid]=f.customItems[sid].filter(i=>i.id!==iid);
+  rMain();save();
+}
+function rmFile(fid){
+  if(!confirm("Remove this listing file?"))return;
+  FILES=FILES.filter(f=>f.id!==fid);
+  if(AID===fid)AID=FILES[0]?.id||null;
+  VIEW="dash";render();save();
+}
+
+/* ── MODAL ── */
+function openModal(){document.getElementById("modal").style.display="flex";}
+function closeModal(){document.getElementById("modal").style.display="none";}
+function createListing(){
+  const addr=document.getElementById("m-address").value.trim();
+  if(!addr){document.getElementById("m-address").focus();return;}
+  const f=nFile();
+  f.address=addr;
+  f.seller=document.getElementById("m-seller").value;
+  f.agent=document.getElementById("m-agent").value;
+  f.listPrice=document.getElementById("m-price").value;
+  f.listDate=document.getElementById("m-listdate").value;
+  FILES.push(f);AID=f.id;VIEW="file";
+  closeModal();render();save();
+}
+
+/* ── EXPORT / IMPORT ── */
+function exportData(){
+  try{
+    const data=JSON.stringify({files:FILES,activeId:AID,dashNotes:DASH_NOTES,exportedAt:new Date().toISOString()},null,2);
+    const blob=new Blob([data],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download="prelisting-backup-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);URL.revokeObjectURL(url);
+    const el=document.getElementById("save-status");
+    el.textContent="✓ exported";el.style.color="#3a7a50";
+    setTimeout(()=>{el.textContent="● saved";el.style.color="#90a880";},2500);
+  }catch(e){alert("Export failed: "+e.message);}
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  if(!confirm("Import this backup? Current data will be replaced.\
+\
+File: "+file.name)){input.value="";return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d.files||!Array.isArray(d.files)){alert("Invalid backup file.");input.value="";return;}
+      localStorage.setItem(SK,JSON.stringify({files:d.files,activeId:d.activeId||null,dashNotes:d.dashNotes||""}));
+      load();render();
+    }catch(err){alert("Could not read file: "+err.message);}
+    input.value="";
+  };
+  reader.readAsText(file);
+}
+
+/* ── EVENT DELEGATION (Chrome file:// fix) ── */
+function bindOnclicks(root){
+  if(!root)return;
+  root.querySelectorAll('[onclick]').forEach(el=>{
+    const fn=el.getAttribute('onclick');if(!fn)return;
+    el.removeAttribute('onclick');
+    el.addEventListener('click',function(e){try{(new Function('event',fn)).call(this,e);}catch(err){console.error(err);}});
+  });
+}
+const _oR=render,_oM=rMain,_oS=rSidebar,_oD=rDashboard;
+render=window.render=function(){_oR();bindOnclicks(document.getElementById('main'));bindOnclicks(document.getElementById('sidebar'));};
+rMain=window.rMain=function(){_oM();bindOnclicks(document.getElementById('main'));};
+rSidebar=window.rSidebar=function(){_oS();bindOnclicks(document.getElementById('sidebar'));};
+rDashboard=window.rDashboard=function(){_oD();bindOnclicks(document.getElementById('main'));};
+
+document.addEventListener("click",function(e){
+  const opener=e.target.closest("[data-open-file]");
+  if(opener&&!e.target.closest("[data-dash-note]")&&e.target.tagName!=="INPUT"&&e.target.tagName!=="BUTTON"){
+    setActive(opener.dataset.openFile);return;
+  }
+  const opener2=e.target.closest("button[data-open-file]");
+  if(opener2){setActive(opener2.dataset.openFile);return;}
+  const lc=e.target.closest("[data-listed-id]");
+  if(lc&&e.target.tagName==="INPUT"&&e.target.type==="checkbox"){
+    e.stopPropagation();
+    setListingDone(lc.dataset.listedId,e.target.checked);return;
+  }
+});
+
+load();render();
+/* ── SUPABASE SYNC ── */
+const SB_URL="https://wkccbbphiphythamnjhg.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrY2NiYnBoaXBoeXRoYW1uamhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNDIxNzEsImV4cCI6MjA5MjYxODE3MX0.f39wgVZidzhS_ZjRGGeUlgB0lp0RRbAy-Lrf3lY7imk";
+const SB_SK="prelisting_v1";
+async function sbGet(k){try{const r=await fetch(SB_URL+"/rest/v1/tracker_data?key=eq."+encodeURIComponent(k)+"&select=value",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY}});const d=await r.json();return(d&&d[0])?d[0].value:null;}catch(e){return null;}}
+async function sbSet(k,v){try{await fetch(SB_URL+"/rest/v1/tracker_data",{method:"POST",headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"resolution=merge-duplicates"},body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})})}catch(e){}}
+const _origSave2=save;
+save=function(){_origSave2();const d=localStorage.getItem(SB_SK);if(d)sbSet(SB_SK,d);};
+(async function(){
+  try{const remote=await sbGet(SB_SK);if(remote)localStorage.setItem(SB_SK,remote);}catch(e){}
+  load();render();
+})();
+
+</script>
+</body>
+</html>

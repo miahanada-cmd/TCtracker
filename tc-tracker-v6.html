@@ -2915,7 +2915,7 @@ async function cloudStart(){
   try{
     const {data,error}=await cloudClient.auth.getSession();if(error)throw error;
     cloudUser=data.session?.user;
-    if(!cloudUser){cloudMessage('Saved on this device. Sign in to sync across your phone, laptop and iPad.',[['Email me a sign-in link',cloudSignIn]]);return;}
+    if(!cloudUser){cloudMessage('Saved on this device. Sign in to sync across your phone, laptop and iPad.',[['Sign in with password',cloudSignIn]]);return;}
     if(cloudUser.email?.toLowerCase()!=='mia@lrgla.com'){cloudMessage('Please sign in as mia@lrgla.com.',[['Sign out',cloudSignOut]]);return;}
     const stored=JSON.parse(localStorage.getItem(CLOUD_META)||'null');cloudMeta=stored?.user===cloudUser.id?stored:{revision:null,base:null};
     const before=localStorage.getItem(SK);
@@ -2963,11 +2963,21 @@ save=function(){
   catch(e){cloudStatus('● save failed — export now');cloudMessage('This device could not save your changes. Export a backup now.',[['Export backup',exportData]]);}
 };
 async function cloudSignIn(){
-  cloudMessage('Sending sign-in link…');
-  const {error}=await cloudClient.auth.signInWithOtp({email:'mia@lrgla.com',options:{emailRedirectTo:'https://miahanada-cmd.github.io/TCtracker/tc-tracker-v6.html'}});
-  cloudMessage(error?'Could not send sign-in link: '+error.message:'Check mia@lrgla.com and open the sign-in link on this device.',[['Send again',cloudSignIn]]);
+  cloudBar.replaceChildren();
+  const form=document.createElement('form');form.style.cssText='display:flex;gap:10px;align-items:center;flex-wrap:wrap';
+  const label=document.createElement('label');label.textContent='Tracker password for mia@lrgla.com ';label.htmlFor='tracker-password';
+  const input=document.createElement('input');input.id='tracker-password';input.type='password';input.autocomplete='current-password';input.required=true;input.style.cssText='padding:9px;border:1px solid #8b9c8d;border-radius:6px';
+  const button=document.createElement('button');button.type='submit';button.textContent='Sign in';button.style.cssText='padding:9px 16px;border-radius:16px;border:1px solid #8b9c8d;background:white';
+  const result=document.createElement('span');result.setAttribute('role','status');
+  form.append(label,input,button,result);cloudBar.append(form);input.focus();
+  form.onsubmit=async event=>{
+    event.preventDefault();button.disabled=true;result.textContent='Signing in…';
+    try{const {error}=await cloudClient.auth.signInWithPassword({email:'mia@lrgla.com',password:input.value});
+      input.value='';if(error)throw error;await cloudStart();
+    }catch(error){result.textContent=error.message;button.disabled=false;input.focus();}
+  };
 }
-async function cloudSignOut(){cloudReady=false;const {error}=await cloudClient.auth.signOut();if(error){cloudFail(error);return;}cloudUser=null;cloudMessage('Signed out. A local copy remains on this device.',[['Email me a sign-in link',cloudSignIn]]);}
+async function cloudSignOut(){cloudReady=false;const {error}=await cloudClient.auth.signOut();if(error){cloudFail(error);return;}cloudUser=null;cloudMessage('Signed out. A local copy remains on this device.',[['Sign in with password',cloudSignIn]]);}
 load();render();cloudStatus('● saved on this device');
 cloudMessage('Connecting to private cloud…');
 if(window.supabase){

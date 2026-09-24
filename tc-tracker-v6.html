@@ -248,6 +248,7 @@ input::placeholder,textarea::placeholder{color:#c0b8a8}
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
 <script>
 /* ── LRG BROKERAGE INFO ── */
 const LRG = {
@@ -511,7 +512,7 @@ function exportData(){
     document.body.removeChild(a);URL.revokeObjectURL(url);
     const el=document.getElementById("save-status");
     el.textContent="✓ exported";el.style.color="#3a7a50";
-    setTimeout(()=>{el.textContent="● saved";el.style.color="#90a880";},2500);
+    setTimeout(()=>{el.textContent="● backup exported";},2500);
   }catch(e){alert("Export failed: "+e.message);}
 }
 
@@ -526,7 +527,7 @@ function importData(input){
       if(!d.transactions||!Array.isArray(d.transactions))
         {alert("Invalid backup file — no transactions found.");input.value="";return;}
       localStorage.setItem(SK,JSON.stringify({transactions:d.transactions,activeId:d.activeId||null,view:d.view||"dash",dashNotes:d.dashNotes||"",todos:d.todos||[]}));
-      load();render();alert("Import successful!");
+      load();render();save();alert("Import successful! Cloud sync will run when connected.");
     }catch(err){alert("Could not parse backup file.");}
     input.value="";
   };
@@ -2878,22 +2879,106 @@ function rDashboard(){
 }
 
 
-/* ── SUPABASE SYNC ── */
-const SB_URL="https://wkccbbphiphythamnjhg.supabase.co";
-const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrY2NiYnBoaXBoeXRoYW1uamhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNDIxNzEsImV4cCI6MjA5MjYxODE3MX0.f39wgVZidzhS_ZjRGGeUlgB0lp0RRbAy-Lrf3lY7imk";
-const SB_SK="tc_tracker_v6";
-async function sbGet(k){
-  try{const r=await fetch(SB_URL+"/rest/v1/tracker_data?key=eq."+encodeURIComponent(k)+"&select=value",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY}});const d=await r.json();return(d&&d[0])?d[0].value:null;}catch(e){return null;}
+/* Private cloud sync. Local data stays intact until an explicit first-sync choice. */
+const CLOUD_URL='https://thxnbzxeanebejeazwnc.supabase.co';
+const CLOUD_KEY='sb_publishable_7LHgrCNy1aghpRKnG2g6Bg__Mzs-3n6';
+const CLOUD_META=SK+'_cloud_v1';
+let cloudClient,cloudUser,cloudReady=false,cloudBusy=false,cloudConflict=false;
+let cloudMeta={revision:null,base:null},cloudTimer;
+const cloudBar=document.createElement('div');
+cloudBar.id='cloud-bar';
+cloudBar.style.cssText='padding:12px 20px;background:#eef4ee;color:#314b38;font:13px Lato,sans-serif;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #d0dace';
+document.body.prepend(cloudBar);
+function cloudMessage(message,actions=[]){
+  cloudBar.replaceChildren();
+  const text=document.createElement('span');text.textContent=message;cloudBar.append(text);
+  for(const [label,action] of actions){const b=document.createElement('button');b.textContent=label;b.style.cssText='padding:7px 12px;border:1px solid #8b9c8d;border-radius:16px;background:white;cursor:pointer';b.onclick=action;cloudBar.append(b);}
 }
-async function sbSet(k,v){
-  try{await fetch(SB_URL+"/rest/v1/tracker_data",{method:"POST",headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"resolution=merge-duplicates"},body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})});}catch(e){}
+function cloudStatus(s){const e=document.getElementById('save-status');if(e)e.textContent=s;}
+function trackerSnapshot(){return {transactions:TXS,activeId:AID,view:VIEW,dashNotes:DASH_NOTES,todos:TODOS};}
+function cloudBackup(){const raw=localStorage.getItem(SK);if(raw)localStorage.setItem(SK+'_before_cloud_'+Date.now(),raw);}
+function cloudRemember(revision,base){cloudMeta={revision,base,user:cloudUser.id};localStorage.setItem(CLOUD_META,JSON.stringify(cloudMeta));}
+function cloudUnlock(){cloudReady=true;cloudConflict=false;cloudMessage('Private cloud · mia@lrgla.com', [['Sync now',()=>cloudSync()],['Sign out',cloudSignOut]]);}
+function cloudFail(error){cloudStatus('● saved on this device');cloudMessage('Cloud unavailable. Your changes are saved on this device. '+error.message,[['Retry',()=>cloudStart()]]);}
+function cloudChoose(remote){
+  cloudReady=false;cloudConflict=true;
+  cloudMessage('This device and the cloud have different versions. Export a backup before choosing which version to use.',[
+    ['Export this device',exportData],
+    ['Use cloud version',()=>{if(!confirm('Use the cloud version? A copy of this device’s version will be kept locally.'))return;cloudBackup();const raw=JSON.stringify(remote.value);localStorage.setItem(SK,raw);cloudRemember(remote.revision,raw);load();render();cloudUnlock();cloudStatus('● synced');}],
+    ['Use this device’s version',async()=>{if(!confirm('Replace the cloud version with this device’s data? Other devices will receive this version.'))return;try{localStorage.setItem(SK+'_cloud_backup_'+Date.now(),JSON.stringify(remote.value));cloudRemember(remote.revision,JSON.stringify(remote.value));cloudUnlock();await cloudSync();}catch(e){cloudFail(e);}}]
+  ]);
 }
-const _origSave=save;
-save=function(){_origSave();const d=localStorage.getItem(SB_SK);if(d)sbSet(SB_SK,d);};
-(async function(){
-  try{const remote=await sbGet(SB_SK);if(remote)localStorage.setItem(SB_SK,remote);}catch(e){}
-  load();render();
-})();
+async function cloudRead(){const {data,error}=await cloudClient.from('tracker_data').select('value,revision').eq('user_id',cloudUser.id).maybeSingle();if(error)throw error;return data;}
+async function cloudStart(){
+  if(cloudBusy)return;
+  cloudBusy=true;cloudReady=false;
+  try{
+    const {data,error}=await cloudClient.auth.getSession();if(error)throw error;
+    cloudUser=data.session?.user;
+    if(!cloudUser){cloudMessage('Saved on this device. Sign in to sync across your phone, laptop and iPad.',[['Email me a sign-in link',cloudSignIn]]);return;}
+    if(cloudUser.email?.toLowerCase()!=='mia@lrgla.com'){cloudMessage('Please sign in as mia@lrgla.com.',[['Sign out',cloudSignOut]]);return;}
+    const stored=JSON.parse(localStorage.getItem(CLOUD_META)||'null');cloudMeta=stored?.user===cloudUser.id?stored:{revision:null,base:null};
+    const before=localStorage.getItem(SK);
+    const remote=await cloudRead();
+    const local=localStorage.getItem(SK);
+    if(local!==before){cloudMessage('Local changes are saved. Tap Retry to finish connecting.',[['Retry',cloudStart]]);return;}
+    if(!remote){
+      cloudMessage('Your private cloud is empty. Start on the device that has your latest tracker entries.',[['Upload this device’s tracker',async()=>{
+        if(!confirm('Upload this device’s tracker to your private TC Tracker database in Supabase?'))return;
+        try{cloudBackup();cloudRemember(null,null);cloudUnlock();await cloudSync();}catch(e){cloudFail(e);}
+      }]]);return;
+    }
+    const remoteRaw=JSON.stringify(remote.value);
+    // PostgreSQL JSONB key order differs; compare parsed values canonically.
+    if(!local||cloudEqual(local,cloudMeta.base)||cloudEqual(local,remoteRaw)){
+      if(local&&!cloudEqual(local,remoteRaw))cloudBackup();
+      localStorage.setItem(SK,remoteRaw);cloudRemember(remote.revision,remoteRaw);load();render();cloudUnlock();cloudStatus('● synced');
+    }else if(remote.revision===cloudMeta.revision){cloudUnlock();setTimeout(cloudSync,0);}
+    else cloudChoose(remote);
+  }catch(e){cloudFail(e);}finally{cloudBusy=false;}
+}
+function cloudCanonical(v){if(Array.isArray(v))return v.map(cloudCanonical);if(v&&typeof v==='object')return Object.fromEntries(Object.keys(v).sort().map(k=>[k,cloudCanonical(v[k])]));return v;}
+function cloudEqual(a,b){if(a===null||b===null)return a===b;try{return JSON.stringify(cloudCanonical(JSON.parse(a)))===JSON.stringify(cloudCanonical(JSON.parse(b)));}catch{return false;}}
+async function cloudSync(){
+  if(!cloudReady||cloudBusy||cloudConflict||!cloudUser)return;
+  cloudBusy=true;
+  try{
+    const raw=localStorage.getItem(SK);if(!raw)return;
+    if(cloudEqual(raw,cloudMeta.base)){cloudBusy=false;await cloudStart();return;}
+    cloudStatus('● syncing…');
+    const value=JSON.parse(raw);const next=(cloudMeta.revision||0)+1;
+    const row={user_id:cloudUser.id,value,revision:next,updated_at:new Date().toISOString()};
+    let result;
+    if(cloudMeta.revision===null)result=await cloudClient.from('tracker_data').insert(row).select('revision');
+    else result=await cloudClient.from('tracker_data').update(row).eq('user_id',cloudUser.id).eq('revision',cloudMeta.revision).select('revision');
+    if(result.error){if(result.error.code==='23505'){const remote=await cloudRead();cloudChoose(remote);return;}throw result.error;}
+    if(!result.data?.length){const remote=await cloudRead();if(remote)cloudChoose(remote);else throw Error('Cloud record missing; reconnect to restore it.');return;}
+    cloudRemember(next,raw);cloudStatus(cloudEqual(localStorage.getItem(SK),raw)?'● synced':'● saved on this device');
+    if(!cloudEqual(localStorage.getItem(SK),raw))setTimeout(cloudSync,0);
+  }catch(e){cloudFail(e);}finally{cloudBusy=false;}
+}
+save=function(){
+  clearTimeout(STIMER);clearTimeout(cloudTimer);
+  try{localStorage.setItem(SK,JSON.stringify(trackerSnapshot()));cloudStatus('● saved on this device');cloudTimer=setTimeout(cloudSync,500);}
+  catch(e){cloudStatus('● save failed — export now');cloudMessage('This device could not save your changes. Export a backup now.',[['Export backup',exportData]]);}
+};
+async function cloudSignIn(){
+  cloudMessage('Sending sign-in link…');
+  const {error}=await cloudClient.auth.signInWithOtp({email:'mia@lrgla.com',options:{emailRedirectTo:'https://miahanada-cmd.github.io/TCtracker/tc-tracker-v6.html'}});
+  cloudMessage(error?'Could not send sign-in link: '+error.message:'Check mia@lrgla.com and open the sign-in link on this device.',[['Send again',cloudSignIn]]);
+}
+async function cloudSignOut(){cloudReady=false;const {error}=await cloudClient.auth.signOut();if(error){cloudFail(error);return;}cloudUser=null;cloudMessage('Signed out. A local copy remains on this device.',[['Email me a sign-in link',cloudSignIn]]);}
+load();render();cloudStatus('● saved on this device');
+cloudMessage('Connecting to private cloud…');
+if(window.supabase){
+  cloudClient=window.supabase.createClient(CLOUD_URL,CLOUD_KEY);
+  cloudClient.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')setTimeout(cloudStart,0);});
+  cloudStart();
+  window.addEventListener('online',()=>cloudStart());
+  window.addEventListener('focus',()=>cloudStart());
+  window.addEventListener('storage',e=>{if(e.key===SK){cloudReady=false;cloudMessage('Tracker changed in another tab. Reload before editing here.',[['Reload',()=>location.reload()]]);document.getElementById('app').inert=true;}});
+  setInterval(()=>{if(document.visibilityState==='visible'&&cloudReady&&!document.activeElement?.matches('input,textarea,[contenteditable=true]'))cloudSync();},15000);
+}else cloudMessage('Cloud connection could not load. Your tracker is available locally.',[['Retry',()=>location.reload()]]);
 
 </script>
 </body>
